@@ -149,6 +149,56 @@
             color: #64748b !important;
         }
 
+        /* ========================================== */
+        /* Task Detail Card (Default Dark Theme)       */
+        /* ========================================== */
+        .task-detail-card {
+            background-color: rgba(15, 23, 42, 0.9) !important;
+            border-color: rgba(51, 65, 85, 0.6) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.14), 0 18px 48px rgba(0,0,0,0.22);
+        }
+        .task-detail-key { color: #94a3b8 !important; }
+        .task-detail-title { color: #f1f5f9 !important; }
+        .task-detail-desc { color: #e2e8f0 !important; }
+        .task-detail-label { color: #94a3b8 !important; }
+        .task-detail-value { color: #f1f5f9 !important; }
+        .task-detail-divider { background-color: rgba(51, 65, 85, 0.5) !important; }
+        .task-detail-link { color: #60a5fa !important; }
+        .task-detail-link:hover { text-decoration: underline; }
+        .task-detail-btn {
+            background-color: rgba(51, 65, 85, 0.5) !important;
+            color: #e2e8f0 !important;
+        }
+        .task-detail-btn:hover { background-color: rgba(51, 65, 85, 0.8) !important; }
+        .task-detail-btn-accepted {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            color: #34d399 !important;
+        }
+        .task-detail-badge-error {
+            background-color: rgba(255, 51, 75, 0.1) !important;
+            border-color: rgba(255, 51, 75, 0.4) !important;
+            color: #ff334b !important;
+        }
+        .task-detail-alert {
+            background-color: rgba(255, 153, 0, 0.08) !important;
+            border-color: rgba(255, 153, 0, 0.35) !important;
+        }
+        .task-detail-alert-icon {
+            background-color: rgba(255, 153, 0, 0.12) !important;
+            color: #f59e0b !important;
+        }
+        .task-detail-input-bar {
+            background-color: rgba(30, 41, 59, 0.8) !important;
+            border-color: rgba(71, 85, 105, 0.5) !important;
+            box-shadow: 0 0 4px rgba(103, 141, 255, 0.18);
+        }
+        .task-detail-input-icon { color: #94a3b8 !important; }
+        .task-detail-input-placeholder { color: #94a3b8 !important; }
+        .task-detail-send-btn {
+            background-color: rgba(71, 85, 105, 0.4) !important;
+            color: #94a3b8 !important;
+        }
+
         #chatMessageFlow .bg-brand-500 {
             color: #ffffff !important;
         }
@@ -158,6 +208,56 @@
             background-color: #eef5ff !important;
             border-color: #cfe0f6 !important;
             color: #1e293b !important;
+        }
+
+        /* ========================================== */
+        /* Task Detail Card (Light Theme Overrides) */
+        /* ========================================== */
+        .task-detail-card {
+            background-color: rgba(255,255,255,0.95) !important;
+            border-color: #d8e3f0 !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 6px 24px rgba(0,0,0,0.08) !important;
+        }
+        .task-detail-key { color: #858585 !important; }
+        .task-detail-title { color: #0d0d0d !important; }
+        .task-detail-desc { color: #0d0d0d !important; }
+        .task-detail-label { color: #858585 !important; }
+        .task-detail-value { color: #0d0d0d !important; }
+        .task-detail-divider { background-color: #e5e7eb !important; }
+        .task-detail-link { color: #295dff !important; }
+        .task-detail-link:hover { text-decoration: underline; }
+        .task-detail-btn {
+            background-color: #f0f0f0 !important;
+            color: #0d0d0d !important;
+        }
+        .task-detail-btn:hover { background-color: #e0e0e0 !important; }
+        .task-detail-btn-accepted {
+            background-color: #dcfce7 !important;
+            color: #16a34a !important;
+        }
+        .task-detail-badge-error {
+            background-color: #fff3f0 !important;
+            border-color: #eb644b !important;
+            color: #eb644b !important;
+        }
+        .task-detail-alert {
+            background-color: #fdf9f3 !important;
+            border-color: #ecbb49 !important;
+        }
+        .task-detail-alert-icon {
+            background-color: #fef3c7 !important;
+            color: #d97706 !important;
+        }
+        .task-detail-input-bar {
+            background-color: #ffffff !important;
+            border-color: #d1d5db !important;
+            box-shadow: 0 0 4px rgba(103,141,255,0.18) !important;
+        }
+        .task-detail-input-icon { color: #858585 !important; }
+        .task-detail-input-placeholder { color: #858585 !important; }
+        .task-detail-send-btn {
+            background-color: #e5e7eb !important;
+            color: #6b7280 !important;
         }
     </style>
 </head>
@@ -296,6 +396,18 @@
                             </div>
                         </button>
                     </div>
+                </div>
+
+                <!-- 内容卡片演示 (Task Detail / Alert 等) -->
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">📋 内容卡片演示</span>
+                    <button onclick="showTaskDetailCard()" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex items-center gap-2 text-slate-300">
+                        <i class="fa-solid fa-rectangle-list text-indigo-400"></i>
+                        <div>
+                            <div class="font-medium text-slate-200">Show: Jira 任务详情卡</div>
+                            <div class="text-[9px] text-slate-500">含风险提示、操作按钮、输入栏</div>
+                        </div>
+                    </button>
                 </div>
 
                 <!-- 手动改变自身状态 -->
@@ -479,7 +591,7 @@
     <!-- ========================================== -->
     <!-- LAYER 1: LUMINA COLLAPSED TRIGGER (悬浮球入口) -->
     <!-- ========================================== -->
-    <div id="luminaTrigger" class="fixed z-40 select-none cursor-pointer flex items-center justify-center">
+    <div id="luminaTrigger" class="fixed z-[100] select-none cursor-pointer flex items-center justify-center pointer-events-auto">
         <!-- 悬浮球本体 -->
         <div id="triggerButton" class="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 shadow-glow flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-200 border border-brand-500/20 relative group">
             
@@ -487,10 +599,13 @@
             <div id="triggerStatusRing" class="hidden absolute inset-[-4px] rounded-full border-2 border-brand-active/50 opacity-0 ring-active-breathe"></div>
             
             <!-- Lumina 精美科技 Logo SVG -->
-            <svg id="triggerLogo" class="w-7 h-7 text-white drop-shadow-md transition-all duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <div class=" w-20 h-20 absolute inset-0 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white drop-shadow-md transition-all duration-300" viewBox="0 0 24 24">
+                <img src="./flow 1.png" style="max-width: none;width: 100%;height: 100%;" draggable="false">
+            </div>
+            <!-- <svg id="triggerLogo" class="w-7 h-7 text-white drop-shadow-md transition-all duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L15 8.5L22 9.5L17 14.5L18.5 21.5L12 18L5.5 21.5L7 14.5L2 9.5L9 8.5L12 2Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
                 <path d="M12 6L13.8 10L18 10.6L15 13.6L15.9 17.8L12 15.8V6Z" fill="#00e1d9"/>
-            </svg>
+            </svg> -->
 
             <!-- 待处理角标数字 (Badge, Step 3.2 L1) -->
             <div id="triggerBadge" class="hidden absolute -top-1.5 -right-1.5 bg-brand-error text-white font-mono font-bold text-[10px] leading-tight px-1.5 py-0.5 rounded-full border-2 border-slate-950 flex items-center justify-center animate-bounce min-w-[20px] h-[20px]">
@@ -576,7 +691,7 @@
     <!-- ========================================== -->
     <!-- LAYER 2: EXPANDED WIDGET PANEL (展开区) -->
     <!-- ========================================== -->
-    <div id="luminaExpandedPanel" class="fixed z-40 select-none w-[360px] h-[580px] max-h-[80vh] rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-800 shadow-panel flex flex-col overflow-hidden opacity-0 pointer-events-none transform scale-95 origin-bottom-right">
+    <div id="luminaExpandedPanel" class="fixed z-[100] select-none w-[360px] h-[580px] max-h-[80vh] rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-800 shadow-panel flex flex-col overflow-hidden opacity-0 pointer-events-none transform scale-95 origin-bottom-right">
         
         <!-- 拖模悬浮提示（Drag File Overlay） -->
         <div id="fileDragOverlay" class="absolute inset-0 z-50 bg-brand-500/15 border-2 border-dashed border-brand-500/80 m-2 rounded-lg flex flex-col items-center justify-center gap-2 transition-all duration-300 opacity-0 pointer-events-none">
@@ -957,6 +1072,9 @@
                 // 如果鼠标点在了内联滑出的 Banner 或推荐卡片上则不拖拽
                 if (e.target.closest('#lightNotificationBanner') || e.target.closest('#hoverRecommendCard')) return;
                 
+                // 阻止浏览器默认行为（防止图片原生拖拽 / 文本选中等干扰自定义拖拽）
+                e.preventDefault();
+
                 state.isDragging = true;
                 state.dragStartPos = { x: e.clientX, y: e.clientY };
                 
@@ -966,6 +1084,9 @@
                 
                 document.getElementById('dragGuide').classList.add('opacity-100', 'scale-100');
                 
+                // 先移除旧监听器，防止重复叠加
+                document.removeEventListener('mousemove', onDragging);
+                document.removeEventListener('mouseup', onDragEnd);
                 document.addEventListener('mousemove', onDragging);
                 document.addEventListener('mouseup', onDragEnd);
                 
@@ -975,6 +1096,10 @@
             // 触摸屏兼容
             trigger.addEventListener('touchstart', (e) => {
                 if (e.target.closest('#lightNotificationBanner') || e.target.closest('#hoverRecommendCard')) return;
+                
+                // 阻止浏览器默认行为（防止页面滚动等干扰拖拽）
+                e.preventDefault();
+
                 state.isDragging = true;
                 const touch = e.touches[0];
                 state.dragStartPos = { x: touch.clientX, y: touch.clientY };
@@ -983,17 +1108,22 @@
                 startOffsetX = touch.clientX - rect.left;
                 startOffsetY = touch.clientY - rect.top;
                 
+                // 先移除旧监听器，防止重复叠加
+                document.removeEventListener('touchmove', onTouchDragging);
+                document.removeEventListener('touchend', onDragEnd);
                 document.addEventListener('touchmove', onTouchDragging);
                 document.addEventListener('touchend', onDragEnd);
             });
 
             function onDragging(e) {
                 if (!state.isDragging) return;
+                e.preventDefault();
                 moveTriggerTo(e.clientX - startOffsetX, e.clientY - startOffsetY);
             }
 
             function onTouchDragging(e) {
                 if (!state.isDragging) return;
+                e.preventDefault();
                 const touch = e.touches[0];
                 moveTriggerTo(touch.clientX - startOffsetX, touch.clientY - startOffsetY);
             }
@@ -1401,6 +1531,132 @@
             const card = btn.closest('.p-3, .rounded-xl');
             if (card) {
                 gsap.to(card, { opacity: 0, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.25, onComplete: () => card.remove() });
+            }
+        }
+
+        // ==========================================
+        // TASK DETAIL CARD (Figma: Jira 任务详情卡)
+        // ==========================================
+        function showTaskDetailCard() {
+            if (!state.isWidgetExpanded) expandWidget();
+            setTimeout(() => {
+                const flow = ensureChatFlowVisible();
+                const card = document.createElement('div');
+                card.className = 'task-detail-card w-full rounded-lg border flex flex-col gap-3 p-4 mb-2 select-text pointer-events-auto';
+                card.setAttribute('data-card-type', 'task-detail');
+                card.innerHTML = `
+                    <!-- 头部：标题 + 状态标签 -->
+                    <div class="flex gap-3 items-start w-full">
+                        <div class="flex flex-col gap-1 flex-1 min-w-0">
+                            <p class="text-[11px] font-medium task-detail-key">Jira-1024</p>
+                            <p class="text-sm font-bold task-detail-title truncate">新增用户权限管理模块</p>
+                            <p class="text-xs task-detail-desc truncate">实现角色管理、用户与角色绑定、权限分配等功能</p>
+                        </div>
+                        <div class="task-detail-badge-error flex items-center justify-center px-2.5 py-0.5 rounded-md border border-solid flex-shrink-0">
+                            <span class="text-xs font-semibold">High</span>
+                        </div>
+                    </div>
+
+                    <!-- 分割线 -->
+                    <div class="task-detail-divider w-full" style="height:1px"></div>
+
+                    <!-- 详情字段 -->
+                    <div class="flex flex-col gap-2.5 text-xs w-full">
+                        <div class="flex gap-1.5 items-start w-full">
+                            <span class="task-detail-label flex-shrink-0" style="width:118px">预计工作量</span>
+                            <span class="task-detail-value flex-1 min-w-0 truncate">3-5天</span>
+                        </div>
+                        <div class="flex gap-1.5 items-start w-full">
+                            <span class="task-detail-label flex-shrink-0" style="width:118px">截止时间</span>
+                            <span class="task-detail-value flex-1 min-w-0 truncate">2026-02-20</span>
+                        </div>
+                        <div class="flex gap-1.5 items-start w-full">
+                            <span class="task-detail-label flex-shrink-0" style="width:118px">负责人</span>
+                            <span class="task-detail-value flex-1 min-w-0">Epic</span>
+                        </div>
+                        <div class="flex gap-1.5 items-start w-full">
+                            <span class="task-detail-label flex-shrink-0" style="width:118px">创建人</span>
+                            <span class="task-detail-value flex-1 min-w-0">Steam</span>
+                        </div>
+                        <div class="flex gap-1.5 items-start w-full">
+                            <span class="task-detail-label flex-shrink-0" style="width:118px">关联项目</span>
+                            <span class="task-detail-value flex-1 min-w-0">User Center</span>
+                        </div>
+                    </div>
+
+                    <!-- 分割线 -->
+                    <div class="task-detail-divider w-full" style="height:1px"></div>
+
+                    <!-- 风险提示 Alert -->
+                    <div class="task-detail-alert flex flex-col gap-2 px-3 py-2 rounded-md border border-solid w-full">
+                        <div class="flex items-center w-full">
+                            <div class="flex flex-1 gap-2.5 items-center min-w-0">
+                                <div class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center task-detail-alert-icon">
+                                    <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                                </div>
+                                <p class="text-sm font-bold flex-1 min-w-0">风险提示</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between w-full whitespace-nowrap">
+                            <p class="text-[11px] font-medium truncate">依赖用户中心接口，可能影响进度</p>
+                            <button onclick="showSandboxToast('🔗 查看风险详情（主应用功能）')" class="task-detail-link text-xs font-normal flex-shrink-0 ml-2">
+                                查看风险
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮组 -->
+                    <div class="flex flex-col items-start w-full">
+                        <div class="flex gap-2 items-start">
+                            <button onclick="handleTaskDetailAction('查看详情')" class="task-detail-btn flex items-center px-2.5 py-1.5 rounded-md text-[11px] font-semibold">
+                                查看详情
+                            </button>
+                            <button onclick="handleTaskDetailAction('接受任务')" class="task-detail-btn flex items-center px-2.5 py-1.5 rounded-md text-[11px] font-semibold">
+                                接受任务
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 底部输入栏 -->
+                    <div class="task-detail-input-bar flex items-center justify-between px-3 py-2 rounded-lg border border-solid w-full shadow-sm">
+                        <div class="flex gap-2 items-center">
+                            <div class="w-4 h-4 flex items-center justify-center task-detail-input-icon">
+                                <i class="fa-solid fa-plus text-[10px]"></i>
+                            </div>
+                            <p class="text-[11px] font-normal whitespace-nowrap task-detail-input-placeholder">发送消息给Lumina</p>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <div class="w-4 h-4 flex items-center justify-center task-detail-input-icon">
+                                <i class="fa-solid fa-microphone text-[10px]"></i>
+                            </div>
+                            <div class="w-5 h-5 flex items-center justify-center task-detail-send-btn rounded-full">
+                                <i class="fa-solid fa-arrow-up text-[8px]"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                flow.appendChild(card);
+                scrollToContentBottom();
+
+                // 入场动画
+                gsap.fromTo(card, { opacity: 0, y: 12, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: 'power3.out' });
+            }, 300);
+        }
+
+        function handleTaskDetailAction(action) {
+            if (action === '接受任务') {
+                // 更新所有同类型卡片中的按钮状态
+                document.querySelectorAll('[data-card-type="task-detail"] .task-detail-btn').forEach(btn => {
+                    if (btn.innerText.trim() === '接受任务') {
+                        btn.innerHTML = '<i class="fa-solid fa-circle-check mr-1 text-[10px]"></i>已接受';
+                        btn.style.pointerEvents = 'none';
+                        btn.classList.add('task-detail-btn-accepted');
+                    }
+                });
+                showSandboxToast('✅ 任务已接受，通知将同步至 Jira');
+                startAutoCollapseCountdown('任务已接受');
+            } else {
+                showSandboxToast('🔍 查看详情（主应用功能）');
             }
         }
 
