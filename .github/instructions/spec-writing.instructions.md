@@ -27,7 +27,7 @@ applyTo: "Agent Desktop Widget UX.md"
 
 如新规则与上述任一条冲突，**不得直接写入**，应改为触发 Escalation 的条件。
 
-## 已拍板决策（不可修改，参见 [Final.md](../Final.md)）
+## 已拍板决策（不可修改，参见 [§ 决策记录](../Agent%20Desktop%20Widget%20UX.md#决策记录-d-01--d-04)）
 
 | 决策 | 固定值 | 涉及章节 |
 |------|--------|---------|

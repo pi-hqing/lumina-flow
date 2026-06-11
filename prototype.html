@@ -83,6 +83,82 @@
         .ring-active-breathe {
             animation: ring-breathe 2s infinite ease-in-out;
         }
+
+        /* ========================================== */
+        /* Day Theme Overrides (浅色主题) */
+        /* ========================================== */
+        body {
+            background: radial-gradient(circle at 20% 10%, #f7fbff 0%, #eef5ff 40%, #e9f1fb 100%);
+            color: #1f2937;
+        }
+
+        #hostEnvironment {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(245, 250, 255, 0.75));
+        }
+
+        #luminaExpandedPanel,
+        #mainAppSimulator .max-w-4xl,
+        #triggerContextMenu > div,
+        #sandboxToast {
+            background-color: rgba(255, 255, 255, 0.95) !important;
+            border-color: #d8e3f0 !important;
+            color: #1f2937 !important;
+        }
+
+        #panelHeader,
+        #panelInputContainer,
+        #panelContentContainer {
+            background-color: rgba(248, 252, 255, 0.94) !important;
+            border-color: #d8e3f0 !important;
+        }
+
+        /* Tailwind 工具类浅色化覆盖：避免逐个重写 HTML class */
+        [class*="bg-slate-950"],
+        [class*="bg-slate-900"],
+        [class*="bg-slate-850"],
+        [class*="bg-slate-800"],
+        [class*="bg-slate-750"] {
+            background-color: rgba(247, 251, 255, 0.94) !important;
+        }
+
+        [class*="border-slate-9"],
+        [class*="border-slate-8"],
+        [class*="border-slate-7"] {
+            border-color: #d8e3f0 !important;
+        }
+
+        [class*="text-slate-100"] { color: #0f172a !important; }
+        [class*="text-slate-200"] { color: #1e293b !important; }
+        [class*="text-slate-300"] { color: #334155 !important; }
+        [class*="text-slate-400"] { color: #475569 !important; }
+        [class*="text-slate-500"] { color: #64748b !important; }
+        [class*="text-slate-600"] { color: #94a3b8 !important; }
+
+        [class*="bg-indigo-950"],
+        [class*="bg-indigo-600/30"],
+        [class*="bg-indigo-500/20"] {
+            background-color: rgba(223, 236, 255, 0.72) !important;
+        }
+
+        /* 输入区与消息区细化 */
+        #widgetInputArea {
+            color: #0f172a !important;
+        }
+
+        #widgetInputArea::placeholder {
+            color: #64748b !important;
+        }
+
+        #chatMessageFlow .bg-brand-500 {
+            color: #ffffff !important;
+        }
+
+        #chatMessageFlow .bg-indigo-950\/20,
+        #chatMessageFlow [id="streamingBubbleBody"] {
+            background-color: #eef5ff !important;
+            border-color: #cfe0f6 !important;
+            color: #1e293b !important;
+        }
     </style>
 </head>
 <body class="w-screen h-screen relative text-slate-200 selection:bg-brand-500/30">
@@ -540,10 +616,14 @@
         </div>
 
         <!-- ────────────────────────────────────────── -->
+        <!-- MODE TAB BAR (模式切换栏, Step 3.3) -->
+        <!-- ────────────────────────────────────────── -->
         <!-- CONTENT (最大高度 80vh 内部滚动, Step 3.3) -->
         <!-- ────────────────────────────────────────── -->
         <div id="panelContentContainer" class="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col gap-4 bg-slate-900/50">
             
+            <!-- ======== 统一会话视图 ======== -->
+            <div id="modeConversationView" class="flex flex-col gap-4 flex-1">
             <!-- 首次空卡片：显示 3 个 P0 模块 (Step 5.2) -->
             <div id="chatEmptyState" class="flex flex-col gap-4 my-auto select-none">
                 <div class="text-center p-4">
@@ -578,15 +658,13 @@
             <!-- 消息历史容器 -->
             <div id="chatMessageFlow" class="hidden flex flex-col gap-4 flex-1">
                 <!-- 预制首条欢迎消息 -->
-                <div class="flex gap-2.5 items-start">
-                    <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
-                        AI
-                    </div>
-                    <div class="bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none p-3 text-xs text-slate-200 max-w-[85%] leading-relaxed">
+                <div class="flex items-start justify-start">
+                    <div class="w-full bg-indigo-950/20 border border-slate-800/60 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">
                         你好！已激活轻量操作面板窗口，我将遵循不打断、不跳转、快速执行的原则为您服务。有什么可以直接询问？
                     </div>
                 </div>
             </div>
+            </div><!-- /modeConversationView -->
 
         </div>
 
@@ -617,6 +695,11 @@
                 </div>
             </div>
 
+            <!-- 快捷按钮栏 (Step 4.4.1 Quick Action Bar · 上下文动态渲染) -->
+            <div id="quickActionBar" class="flex items-center gap-2 px-1 overflow-x-auto no-scrollbar flex-nowrap">
+                <!-- 由 renderQuickActionBar() 动态填充 -->
+            </div>
+
             <!-- 输入区域 -->
             <div class="flex items-end gap-2 relative bg-slate-900 rounded-lg border border-slate-800 px-2.5 py-1.5 focus-within:border-brand-500/50 transition-all">
                 <!-- 附件纸夹，支持 A11y 焦点 (Step 4.4) -->
@@ -638,6 +721,18 @@
                 </button>
             </div>
 
+            <!-- 自动收起倒计时栏 (Step 4.2: 任务完成后 3s 自动收起) -->
+            <div id="autoCollapseBar" class="hidden bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2 flex items-center justify-between transition-all">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i>
+                    <span id="autoCollapseLabel" class="text-[10px] text-emerald-300 font-medium">任务完成，3 秒后自动收起</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="autoCollapseCountdown" class="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">3</span>
+                    <button onclick="cancelAutoCollapse()" class="text-[9px] text-slate-400 hover:text-slate-200 px-1.5 py-0.5 rounded hover:bg-slate-800 transition-all">取消</button>
+                </div>
+            </div>
+
             <!-- 底下反馈：说明有正在执行 / 草稿字样 -->
             <div class="flex justify-between items-center px-1 text-[9px] text-slate-500">
                 <span id="footerUsageTips">支持拖拽文件/截图到此处</span>
@@ -657,6 +752,8 @@
             isDraggableSnapping: true,
             isDragging: false,
             dragStartPos: { x: 0, y: 0 },
+            snappedLeft: false,
+            snappedRight: true,
             
             // 通知机制
             unreadCount: 0,
@@ -672,6 +769,12 @@
             currentStreamingTimer: null,
             useP0SuggestionCount: 0, // P0 用过3次消失
             chatHistory: [],
+            escalationDeclinedThisSession: false,
+            hasShownRound4Escalation: false,
+            hasShownRound7Escalation: false,
+            isInputFocused: false,
+            backgroundTasks: [],
+            backgroundTaskResultsPending: [],
 
             // Hover 态高频推荐
             hoverRecommendTimer: null,
@@ -710,11 +813,22 @@
             applyTriggerLayoutAndPosition();
             initKeyboardShortcuts();
             initDragAndDrop();
+            initInputFocusTracking();
             initHoverRecommendations(); // 注册智能 Hover 高频推荐
-            
+            renderQuickActionBar();     // 初始渲染快捷按钮栏
+
             // 首次状态
             resetSystemState();
         });
+
+        function initInputFocusTracking() {
+            widgetInput.addEventListener('focus', () => {
+                state.isInputFocused = true;
+            });
+            widgetInput.addEventListener('blur', () => {
+                state.isInputFocused = false;
+            });
+        }
 
         // 刷新时间
         function initSystemClock() {
@@ -941,7 +1055,7 @@
         function performAutoSnapping() {
             const screenW = window.innerWidth;
             const curX = state.widgetCurrentPosition.x;
-            const threshold = 120; // 边界触发值 (规范是左 < 80px, 右 < 80px，我们调到 120px 体验更敏感明显)
+            const threshold = 80; // Step 4.1: 吸边阈值 80px
             
             let destX = curX;
             let isSnappedLeft = false;
@@ -949,11 +1063,11 @@
 
             if (curX < threshold) {
                 // 吸附左侧
-                destX = -32; // 只露出 20px (悬浮球宽 56px, -32 刚好露出 24px)
+                destX = -36; // 只露出 20px (56 - 36)
                 isSnappedLeft = true;
             } else if (curX > (screenW - 56 - threshold)) {
                 // 吸附右侧
-                destX = screenW - 24; // 只露出 24px
+                destX = screenW - 20; // 只露出 20px
                 isSnappedRight = true;
             }
 
@@ -1050,6 +1164,7 @@
         function changeHostContext(contextVal) {
             state.activeHostContext = contextVal;
             renderHoverRecommendActions();
+            renderQuickActionBar();
             showSandboxToast(`💻 宿主已切换焦点应用: ${contextVal.toUpperCase()}`);
         }
 
@@ -1095,7 +1210,7 @@
                     hideHoverRecommendCard();
                     
                     if (state.snappedLeft || state.snappedRight) {
-                        let hiddenX = state.snappedLeft ? -32 : window.innerWidth - 24;
+                        let hiddenX = state.snappedLeft ? -36 : window.innerWidth - 20;
                         gsap.to(trigger, { left: hiddenX, duration: 0.2, ease: 'power2.out' });
                         gsap.to(triggerBtn, { opacity: 0.5, scale: 0.9, duration: 0.2 });
                     }
@@ -1106,9 +1221,7 @@
         function showHoverRecommendCard() {
             if (state.isWidgetExpanded || state.isDragging) return;
             
-            const rect = trigger.getBoundingClientRect();
-            const screenW = window.innerWidth;
-            const leftSided = rect.left < screenW / 2;
+            const leftSided = state.snappedLeft || (!state.snappedRight && trigger.getBoundingClientRect().left < window.innerWidth / 2);
 
             // Ensure the actions are fresh before display
             renderHoverRecommendActions();
@@ -1191,8 +1304,187 @@
         }
 
         // ==========================================
-        // STEP 4.2: 唤起与收起
+        // QUICK ACTION BAR (Step 4.4.1 · 上下文动态渲染)
         // ==========================================
+
+        // 按钮图标映射
+        const QUICK_ACTION_ICONS = {
+            '通知': 'fa-bell text-amber-400',
+            '紧急任务': 'fa-bolt text-brand-warning',
+            '查看详情': 'fa-magnifying-glass text-sky-400',
+            '接受任务': 'fa-circle-check text-emerald-400',
+            '询问 Lumina': 'fa-comment-dots text-brand-500',
+            '联系负责人': 'fa-user-plus text-purple-400',
+            '创建阻塞项': 'fa-triangle-exclamation text-rose-400',
+            'AI 自动任务追踪': 'fa-spinner text-indigo-400',
+            '验收摘要': 'fa-clipboard-check text-emerald-400',
+            '自动归档': 'fa-box-archive text-slate-400',
+            '生成项目报告': 'fa-file-lines text-sky-400',
+        };
+
+        // 场景 → 按钮映射表
+        const QUICK_ACTION_MAP = {
+            general:     ['通知', '紧急任务', '询问 Lumina', 'AI 自动任务追踪'],
+            jira:        ['查看详情', '接受任务', '创建阻塞项', 'AI 自动任务追踪'],
+            email:       ['查看详情', '联系负责人', '自动归档', '生成项目报告'],
+            vscode:      ['查看详情', 'AI 自动任务追踪', '询问 Lumina', '生成项目报告'],
+        };
+
+        function renderQuickActionBar() {
+            const bar = document.getElementById('quickActionBar');
+            if (!bar) return;
+            const ctx = state.activeHostContext || 'general';
+            const buttons = QUICK_ACTION_MAP[ctx] || QUICK_ACTION_MAP.general;
+
+            bar.innerHTML = buttons.map(label => {
+                const iconClass = QUICK_ACTION_ICONS[label] || 'fa-circle text-slate-400';
+                const className = `flex-shrink-0 h-8 rounded-full bg-slate-800/60 hover:bg-slate-700/80 border border-slate-700/50 text-[10px] font-medium text-slate-300 hover:text-white transition-all flex items-center justify-center gap-1.5 px-3 whitespace-nowrap`;
+                return `<button onclick="handleQuickAction('${label}')" class="${className}">
+                    <i class="fa-solid ${iconClass} text-[10px]"></i>
+                    <span>${label}</span>
+                </button>`;
+            }).join('');
+        }
+
+        function handleQuickAction(action) {
+            if (!state.isWidgetExpanded) expandWidget();
+
+            switch (action) {
+                case '通知':
+                    const notifContainer = ensureChatFlowVisible();
+                    const card = document.createElement('div');
+                    card.className = 'w-full bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-xs flex flex-col gap-2';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-bell text-amber-400 text-[10px]"></i>
+                            <span class="text-[11px] font-semibold text-slate-200">最近通知</span>
+                            <span class="text-[9px] text-slate-500 font-mono ml-auto">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <div class="flex flex-col gap-1.5 text-[10px] text-slate-400">
+                            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>会议即将开始 (5 分钟后)</div>
+                            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>Agent 任务 #TK-8842 已完成</div>
+                            <div class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-slate-500"></span>系统更新 v4.2.2 已就绪</div>
+                        </div>
+                        <div class="flex gap-2 mt-1">
+                            <button onclick="dismissInlineCard(this)" class="text-[9px] text-slate-500 hover:text-slate-300">忽略</button>
+                            <button onclick="dismissInlineCard(this)" class="text-[9px] text-brand-500 hover:text-brand-400 ml-auto">查看全部 →</button>
+                        </div>
+                    `;
+                    notifContainer.appendChild(card);
+                    scrollToContentBottom();
+                    break;
+
+                case '紧急任务':
+                    widgetInput.value = '/urgent ';
+                    widgetInput.focus();
+                    handleInputBehaviour(widgetInput);
+                    break;
+
+                case '询问 Lumina':
+                    widgetInput.value = '';
+                    widgetInput.focus();
+                    widgetInput.placeholder = '描述你想了解的内容…';
+                    showSandboxToast('💬 请直接输入你的问题');
+                    break;
+
+                default:
+                    // 通用：预填输入框并聚焦
+                    widgetInput.value = action + '：';
+                    widgetInput.focus();
+                    handleInputBehaviour(widgetInput);
+                    showSandboxToast(`🚀 快捷动作触发: ${action}`);
+                    break;
+            }
+        }
+
+        function dismissInlineCard(btn) {
+            const card = btn.closest('.p-3, .rounded-xl');
+            if (card) {
+                gsap.to(card, { opacity: 0, height: 0, marginBottom: 0, paddingTop: 0, paddingBottom: 0, duration: 0.25, onComplete: () => card.remove() });
+            }
+        }
+
+        function ensureChatFlowVisible() {
+            const flow = document.getElementById('chatMessageFlow');
+            const empty = document.getElementById('chatEmptyState');
+            flow.classList.remove('hidden');
+            if (empty) empty.classList.add('hidden');
+            return flow;
+        }
+
+        // ==========================================
+        // AUTO-COLLAPSE COUNTDOWN (自动收起倒计时, Step 4.2)
+        // ==========================================
+        let autoCollapseTimer = null;
+        let autoCollapseInterval = null;
+
+        function startAutoCollapseCountdown(reason) {
+            const bar = document.getElementById('autoCollapseBar');
+            const label = document.getElementById('autoCollapseLabel');
+            const countdown = document.getElementById('autoCollapseCountdown');
+
+            if (autoCollapseTimer) clearTimeout(autoCollapseTimer);
+            if (autoCollapseInterval) clearInterval(autoCollapseInterval);
+
+            label.innerText = reason + '，3 秒后自动收起';
+            let remaining = 3;
+            countdown.innerText = remaining;
+
+            bar.classList.remove('hidden');
+            gsap.fromTo(bar, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.25 });
+
+            autoCollapseInterval = setInterval(() => {
+                remaining--;
+                countdown.innerText = remaining;
+                if (remaining <= 1) {
+                    countdown.className = 'text-[10px] font-mono font-bold text-brand-error bg-brand-error/10 px-1.5 py-0.5 rounded animate-pulse';
+                }
+            }, 1000);
+
+            autoCollapseTimer = setTimeout(() => {
+                clearInterval(autoCollapseInterval);
+                bar.classList.add('hidden');
+                collapseWidget();
+            }, 3000);
+        }
+
+        function cancelAutoCollapse() {
+            if (autoCollapseTimer) clearTimeout(autoCollapseTimer);
+            if (autoCollapseInterval) clearInterval(autoCollapseInterval);
+            const bar = document.getElementById('autoCollapseBar');
+            gsap.to(bar, { opacity: 0, y: -4, duration: 0.2, onComplete: () => bar.classList.add('hidden') });
+            showSandboxToast('已取消自动收起，面板保持展开');
+        }
+
+        function cancelAutoCollapseSilent() {
+            if (autoCollapseTimer) clearTimeout(autoCollapseTimer);
+            if (autoCollapseInterval) clearInterval(autoCollapseInterval);
+            const bar = document.getElementById('autoCollapseBar');
+            bar.classList.add('hidden');
+        }
+
+        // Hook: L1/L2 通知到达时同步写入通知中心
+        const _origPushL1 = pushL1Notification;
+        pushL1Notification = function() {
+            _origPushL1();
+            state.l1l2NotificationList.push({
+                message: '新消息提醒',
+                time: Date.now(),
+                level: 'L1'
+            });
+        };
+
+        const _origPushL2 = pushL2Notification;
+        pushL2Notification = function(message) {
+            _origPushL2(message);
+            state.l1l2NotificationList.push({
+                message: message,
+                time: Date.now(),
+                level: 'L2'
+            });
+            // 通知已记录，用户在会话中通过快捷按钮查看
+        };
+
         function toggleWidgetView() {
             if (state.isWidgetExpanded) {
                 collapseWidget();
@@ -1226,6 +1518,8 @@
                 }}
             );
 
+            flushPendingBackgroundTaskResults();
+
             // 清空折叠态临时红/呼气
             clearL2Banner();
         }
@@ -1242,6 +1536,9 @@
                 showSandboxToast("⚠️ 输入框内有正在撰写的草稿，不可收起");
                 return;
             }
+
+            // 取消自动收起倒计时
+            cancelAutoCollapseSilent();
 
             state.isWidgetExpanded = false;
             
@@ -1273,7 +1570,7 @@
             }
             
             // 如果满足不可收起规则，豁免
-            if (state.isAgentResponding || widgetInput.value.trim().length > 0) {
+            if (state.isAgentResponding || state.isInputFocused) {
                 return;
             }
             
@@ -1427,34 +1724,28 @@
             document.getElementById('chatEmptyState').classList.add('hidden');
 
             const bubbleItem = document.createElement('div');
-            bubbleItem.className = "flex gap-2.5 items-start animate-fade-in";
+            bubbleItem.className = "flex items-start animate-fade-in";
             
             const isUser = (sender === 'user');
             const isSystem = (sender === 'agent-system');
             
-            let bgClass = "bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none";
+            let bgClass = "bg-indigo-950/20 border border-slate-800/60 rounded-xl";
             let alignClass = "justify-start";
-            let label = "AI";
-            let labelStyle = "bg-brand-500/20 text-brand-500";
+            let widthClass = "w-full";
 
             if (isUser) {
                 bgClass = "bg-brand-500 text-white rounded-xl rounded-tr-none";
-                alignClass = "justify-end flex-row-reverse";
-                label = "ME";
-                labelStyle = "bg-white/20 text-white";
+                alignClass = "justify-end";
+                widthClass = "max-w-[85%]";
             } else if (isSystem) {
                 bgClass = "bg-slate-950/60 border border-slate-800/60 text-slate-300 rounded-xl";
-                label = "SYS";
-                labelStyle = "bg-slate-800 text-slate-400";
+                widthClass = "w-full";
             }
 
             bubbleItem.classList.add(...alignClass.split(' '));
             
             const innerHtml = `
-                <div class="w-6 h-6 rounded-full ${labelStyle} flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
-                    ${label}
-                </div>
-                <div class="${bgClass} p-3 text-xs max-w-[85%] leading-relaxed ${isUser ? 'selection:bg-white/20' : 'selection:bg-brand-500/20'}">
+                <div class="${bgClass} ${widthClass} p-3 text-xs leading-relaxed ${isUser ? 'selection:bg-white/20' : 'selection:bg-brand-500/20'}">
                     ${isHtml ? content : escapeHtml(content)}
                 </div>
             `;
@@ -1504,8 +1795,10 @@
                 state.useP0SuggestionCount++;
             }
 
+            state.sessionCount++;
+
             // 触发 Agent 处理流程 (Step 5.3)
-            triggerAgentProcessing(rawVal);
+            triggerAgentProcessing(rawVal, state.sessionCount);
         }
 
         // 快捷用例填入
@@ -1518,19 +1811,16 @@
         // ==========================================
         // STEP 5.3: AGENT RESPONSE FLOW (流式与延时响应)
         // ==========================================
-        function triggerAgentProcessing(userText) {
+        function triggerAgentProcessing(userText, round) {
             state.isAgentResponding = true;
             toggleAgentUiState(true);
 
             // 1. 创建流式消息占位符
             const flow = document.getElementById('chatMessageFlow');
             const bubbleItem = document.createElement('div');
-            bubbleItem.className = "flex gap-2.5 items-start justify-start";
+            bubbleItem.className = "flex items-start justify-start";
             bubbleItem.innerHTML = `
-                <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
-                    AI
-                </div>
-                <div id="streamingBubbleBody" class="bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none p-3 text-xs text-slate-200 max-w-[85%] leading-relaxed flex flex-col gap-2">
+                <div id="streamingBubbleBody" class="w-full bg-indigo-950/20 border border-slate-800/60 rounded-xl p-3 text-xs text-slate-200 leading-relaxed flex flex-col gap-2">
                     <div id="streamingLoadingArea" class="flex items-center gap-1.5 py-1">
                         <span class="typing-dot w-2 h-2 rounded-full bg-brand-500"></span>
                         <span class="typing-dot w-2 h-2 rounded-full bg-brand-500"></span>
@@ -1576,7 +1866,7 @@
                 clearInterval(timer);
                 
                 // 识别意图并路由回复 (Step 6)
-                routeAgentIntentResponse(userText, bubbleItem);
+                routeAgentIntentResponse(userText, bubbleItem, round);
             }, 3000);
         }
 
@@ -1625,9 +1915,6 @@
             const sendBtn = document.getElementById('btnSendMessage');
             
             if (active) {
-                // 折叠态也相应闪烁
-                triggerStatusRing.classList.remove('hidden');
-                gsap.to(triggerStatusRing, { opacity: 1, scale: 1.15, duration: 0.3 });
                 hDot.className = "relative inline-flex rounded-full h-2 w-2 bg-brand-active";
                 hDotPulse.className = "absolute inline-flex h-full w-full rounded-full bg-brand-active opacity-75 animate-ping";
                 
@@ -1652,12 +1939,25 @@
                 widgetInput.placeholder = "有什么需要帮忙的？(拼写 / 唤出菜单)";
                 widgetInput.disabled = false;
             }
+
+            updateTriggerExecutionIndicator();
+        }
+
+        function updateTriggerExecutionIndicator() {
+            const hasRunningBackgroundTask = state.backgroundTasks.some((task) => task.status === 'running');
+            if (state.isAgentResponding || hasRunningBackgroundTask) {
+                triggerStatusRing.classList.remove('hidden');
+                gsap.to(triggerStatusRing, { opacity: 1, scale: 1.15, duration: 0.25 });
+            } else {
+                triggerStatusRing.classList.add('hidden');
+                gsap.set(triggerStatusRing, { opacity: 0 });
+            }
         }
 
         // ==========================================
         // ROUTE INTENT RESPONSE (智能路由响应输出)
         // ==========================================
-        function routeAgentIntentResponse(text, bubbleItem) {
+        function routeAgentIntentResponse(text, bubbleItem, round) {
             const loading = bubbleItem.querySelector('#streamingLoadingArea');
             const textArea = bubbleItem.querySelector('#streamingTextArea');
             
@@ -1692,6 +1992,7 @@
                     `;
                     state.isAgentResponding = false;
                     toggleAgentUiState(false);
+                    appendRoundEscalationSuggestion(round, triggerScenario, text);
                 });
             } else if (triggerScenario === 'long') {
                 contentStr = "这属于 **C类 超出边界任务**。我们评估当前的输出篇幅将远超 500 字限值，并在小屏幕中严重降低长文本编辑效率。根据推荐的软限制，强烈建议将本会话挂载升级至主应用进行。";
@@ -1716,6 +2017,7 @@
                     `;
                     state.isAgentResponding = false;
                     toggleAgentUiState(false);
+                    appendRoundEscalationSuggestion(round, triggerScenario, text);
                 });
             } else if (triggerScenario === 'clarify') {
                 // 5.2 模糊意图
@@ -1736,6 +2038,7 @@
                     `;
                     state.isAgentResponding = false;
                     toggleAgentUiState(false);
+                    appendRoundEscalationSuggestion(round, triggerScenario, text);
                 });
             } else if (triggerScenario === 'destructive') {
                 contentStr = "已检测到您请求的是撤销或删除系统生产级流水线的动作。根据系统 **E类 不可逆操作拦截规范**，您需要获得最高级别的安全验证并提供多人员确认。";
@@ -1765,7 +2068,7 @@
                     bubbleItem.querySelector('#streamingActionArea').outerHTML = `
                         <div class="flex flex-col gap-2.5 mt-2 pt-2 border-t border-slate-800/60 select-text pointer-events-auto">
                             <div class="bg-slate-950/60 p-3 rounded border border-slate-800 flex flex-col gap-3">
-                                <div class="text-[9px] text-slate-500 font-mono font-bold uppercase tracking-wider">🗒️ 新建轻待办卡片 (MODE B)</div>
+                                <div class="text-[9px] text-slate-500 font-mono font-bold uppercase tracking-wider">🗒️ 新建轻待办卡片</div>
                                 <div class="flex flex-col gap-1">
                                     <label class="text-[9px] text-slate-400">待办名称:</label>
                                     <input id="todoFormTitle" type="text" class="bg-slate-900 border border-slate-800 rounded p-1.5 text-[11px] text-slate-200 py-1 focus:outline-none focus:border-brand-500/50" value="重构 legacy 的 WebSocket 连接重试">
@@ -1785,8 +2088,50 @@
                     `;
                     state.isAgentResponding = false;
                     toggleAgentUiState(false);
+                    appendRoundEscalationSuggestion(round, triggerScenario, text);
                 });
             }
+        }
+
+        function appendRoundEscalationSuggestion(round, scenario, text) {
+            if (state.escalationDeclinedThisSession) return;
+
+            // Step 6.6: 第 4 轮评估是否超边界
+            const shouldSuggestAtRound4 = round === 4 && !state.hasShownRound4Escalation;
+
+            // Step 6.6: 第 7 轮无论任务类型都给一次建议
+            const shouldSuggestAtRound7 = round >= 7 && !state.hasShownRound7Escalation;
+
+            if (!shouldSuggestAtRound4 && !shouldSuggestAtRound7) return;
+
+            if (shouldSuggestAtRound4) {
+                state.hasShownRound4Escalation = true;
+            }
+            if (shouldSuggestAtRound7) {
+                state.hasShownRound7Escalation = true;
+            }
+
+            const reason = shouldSuggestAtRound7
+                ? `当前会话已进行到第 ${round} 轮，建议转到主应用获取完整上下文与更强编辑能力。`
+                : `当前会话已进行到第 ${round} 轮，已触发边界评估，建议在主应用继续以避免后续上下文丢失。`;
+
+            addBubble('agent-system', `
+                <div class="flex flex-col gap-2">
+                    <div class="text-brand-warning font-semibold text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-arrows-up-down-left-right"></i>
+                        多轮会话 Escalation 建议
+                    </div>
+                    <div class="text-[10px] text-slate-400 leading-normal">${reason}</div>
+                    <div class="flex gap-2">
+                        <button onclick="declineEscalation(this)" class="px-2.5 py-1 hover:bg-slate-850 rounded text-[10px] font-semibold text-slate-300 border border-slate-800">
+                            继续在这里
+                        </button>
+                        <button onclick="triggerEscalation('agent_suggested', 'multi_round_dialogue')" class="flex-1 text-center bg-brand-500 hover:bg-brand-600 transition-all font-semibold rounded px-2.5 py-1 text-[10px] text-white">
+                            打开主应用
+                        </button>
+                    </div>
+                </div>
+            `, true);
         }
 
         // 字符逐字吐出效果 (ChatGPT 拟真)
@@ -1853,9 +2198,70 @@
             
             // UX 规范：4.2 收起方式「任务完成 3 秒延迟后自动收缩折叠态，减少干扰」
             showSandboxToast("轻任务提交完毕，3 秒后自动闭合折叠态 (Step 4.2)");
+            startAutoCollapseCountdown('任务已提交完毕');
+        }
+
+        function startBackgroundTaskLifecycle() {
+            const taskId = `TK-${Math.floor(Math.random() * 90000) + 10000}`;
+            const task = {
+                id: taskId,
+                status: 'running',
+                createdAt: Date.now(),
+                resultSummary: `任务 ${taskId} 已完成：Legacy Web 资产压缩与校验通过。`
+            };
+            state.backgroundTasks.push(task);
+
+            addBubble('agent-system', `
+                <div class="flex flex-col gap-2">
+                    <div class="text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-gears"></i>
+                        后台任务已开始
+                    </div>
+                    <div class="text-[10px] text-slate-400">任务 ID: <span class="font-mono text-slate-200">${taskId}</span>，你可以先收起 Widget，完成后会通过角标和 L2 提示通知。</div>
+                </div>
+            `, true);
+
+            updateTriggerExecutionIndicator();
+            pushL2Notification(`⚙️ [后台任务开始] ${taskId} 已启动，任务将在折叠态持续执行。`);
+            showSandboxToast(`后台任务 ${taskId} 已启动`);
+
             setTimeout(() => {
                 collapseWidget();
-            }, 3000);
+            }, 800);
+
+            setTimeout(() => {
+                task.status = 'completed';
+                state.backgroundTaskResultsPending.push(task.id);
+                updateTriggerExecutionIndicator();
+                pushL2Notification(`🚀 [后台任务完成] ${task.id} 已执行完毕，点击展开查看结果摘要。`);
+                if (state.isWidgetExpanded) {
+                    flushPendingBackgroundTaskResults();
+                }
+            }, 7000);
+        }
+
+        function flushPendingBackgroundTaskResults() {
+            if (!state.backgroundTaskResultsPending.length) return;
+
+            const pendingIds = [...state.backgroundTaskResultsPending];
+            state.backgroundTaskResultsPending = [];
+
+            pendingIds.forEach((taskId) => {
+                const task = state.backgroundTasks.find((x) => x.id === taskId);
+                if (!task) return;
+                addBubble('agent-system', `
+                    <div class="flex flex-col gap-2">
+                        <div class="text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i>
+                            后台任务完成
+                        </div>
+                        <div class="text-[10px] text-slate-400">${task.resultSummary}</div>
+                        <button onclick="triggerEscalation('navigation', 'background_task_result')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded py-1 text-[10px] font-semibold text-slate-200">
+                            查看完整结果
+                        </button>
+                    </div>
+                `, true);
+            });
         }
 
         // ==========================================
@@ -1932,7 +2338,7 @@
             // 自动伸展
             expandWidget();
 
-            // 在 MessageFlow 中，置顶或追加一个强通知形式的卡片 (Mode C, Step 3.3)
+            // 在 MessageFlow 中插入强通知 InlineCard (统一会话模式)
             const flow = document.getElementById('chatMessageFlow');
             flow.classList.remove('hidden');
             document.getElementById('chatEmptyState').classList.add('hidden');
@@ -1963,6 +2369,14 @@
             // 插入至最前面
             flow.insertBefore(card, flow.firstChild);
             scrollToContentBottom();
+            
+            // 同步写入通知中心
+            state.l1l2NotificationList.push({
+                message: title,
+                time: Date.now(),
+                level: 'L3'
+            });
+
             showSandboxToast("🔥 L3强响应状态触发！Widget 强制启动展开，呈现决策核心卡片");
         }
 
@@ -2060,21 +2474,8 @@
             } else if (type === 'destructive') {
                 simulatedInput = "清空并彻底格式化所有正在执行的后台产品线数据库实例";
             } else if (type === 'background') {
-                // 后台执行，并且触发折叠态 (Step 6.7)
-                showSandboxToast("⚙️ 后台任务触发！Widget 故意收起，模拟 8 秒后后台跑完产生角标。");
-                collapseWidget();
-                
-                // 执行环运行
-                triggerStatusRing.classList.remove('hidden');
-                gsap.to(triggerStatusRing, { opacity: 1, scale: 1.15, duration: 0.3 });
-                
-                // 模拟 7s 后任务完成，弹出轻提示
-                setTimeout(() => {
-                    triggerStatusRing.classList.add('hidden');
-                    gsap.set(triggerStatusRing, { opacity: 0 });
-                    
-                    pushL2Notification("🚀 [后台批处理完成] 全局 Legacy Web 静态代码压缩已全部无错执行完毕！");
-                }, 7000);
+                // Step 6.7: 发起 -> 任务ID -> 收起执行 -> 完成通知 -> 展开查看
+                startBackgroundTaskLifecycle();
                 return;
             }
 
@@ -2124,6 +2525,7 @@
         // 用户按了拒绝升级按钮，仅做个关闭并忽略
         function declineEscalation(btnNode) {
             const card = btnNode.closest('.flex-col');
+            state.escalationDeclinedThisSession = true;
             card.innerHTML = `
                 <div class="text-slate-400 text-[10px] italic py-1"><i class="fa-solid fa-reply mr-1"></i> 您选择了继续在 Widget 中查看...</div>
             `;
@@ -2246,6 +2648,13 @@
             state.lastL3NotificationTime = 0;
             state.isAgentResponding = false;
             state.currentDraft = "";
+            state.sessionCount = 0;
+            state.escalationDeclinedThisSession = false;
+            state.hasShownRound4Escalation = false;
+            state.hasShownRound7Escalation = false;
+            state.isInputFocused = false;
+            state.backgroundTasks = [];
+            state.backgroundTaskResultsPending = [];
 
             panel.classList.add('pointer-events-none');
             gsap.set(panel, { opacity: 0, scale: 0.9 });
@@ -2263,11 +2672,8 @@
             // 重设对话视图
             const flow = document.getElementById('chatMessageFlow');
             flow.innerHTML = `
-                <div class="flex gap-2.5 items-start">
-                    <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
-                        AI
-                    </div>
-                    <div class="bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none p-3 text-xs text-slate-200 max-w-[85%] leading-relaxed">
+                <div class="flex items-start justify-start">
+                    <div class="w-full bg-indigo-950/20 border border-slate-800/60 rounded-xl p-3 text-xs text-slate-200 leading-relaxed">
                         你好！已激活轻量操作面板窗口，我将遵循不打断、不跳转、快速执行的原则为您服务。有什么可以直接询问？
                     </div>
                 </div>
@@ -2291,6 +2697,7 @@
             document.getElementById('btnNetworkMode').className = "flex-1 hover:bg-brand-error/20 hover:border-brand-error/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2";
 
             toggleAgentUiState(false);
+            updateTriggerExecutionIndicator();
             showSandboxToast("⚙️ 系统沙箱已重置为：初始状态");
         }
 
