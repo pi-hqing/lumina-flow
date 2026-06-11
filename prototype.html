@@ -1,0 +1,2312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumina Widget · 交互式高保真原型</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0070f3', // Lumina 核心蓝
+                            600: '#0062d6',
+                            active: '#00e1d9', // 执行中青色
+                            error: '#ff334b',  // 错误红色
+                            warning: '#ff9900' // 警告橙
+                        }
+                    },
+                    boxShadow: {
+                        'glow': '0 0 15px rgba(0, 112, 243, 0.4)',
+                        'glow-active': '0 0 15px rgba(0, 225, 217, 0.5)',
+                        'glow-err': '0 0 15px rgba(255, 51, 75, 0.5)',
+                        'panel': '0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 5px 15px -3px rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+            background-color: #0b0f19;
+        }
+        /* 隐藏滚动条但保留滚动 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* 定制微妙滚动条 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.25);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.45);
+        }
+        /* 三点流式加载动效 */
+        .typing-dot {
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
+        }
+        /* 环形呼吸动画（执行中） */
+        @keyframes ring-breathe {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.15); opacity: 0.3; }
+        }
+        .ring-active-breathe {
+            animation: ring-breathe 2s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="w-screen h-screen relative text-slate-200 selection:bg-brand-500/30">
+
+    <!-- ========================================== -->
+    <!-- 背景：模拟用户工作空间（宿主环境） -->
+    <!-- ========================================== -->
+    <div class="absolute inset-0 z-0 flex flex-col p-6 w-full h-full select-none overflow-hidden transition-all duration-300 pointer-events-none" id="hostEnvironment">
+        <!-- 宿主顶部栏 -->
+        <div class="flex justify-between items-center pb-4 border-b border-slate-800/60 pointer-events-auto">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 w-8 h-8 rounded flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                    <i class="fa-solid fa-layer-group text-white text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-sm font-semibold tracking-wide text-indigo-400">LUMINA SYNERGY WORKSPACE</h1>
+                    <p class="text-xs text-slate-500">v4.2.1-Enterprise · 宿主环境模拟器</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <!-- 网络连接状态 -->
+                <div id="hostNetworkIndicator" class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    ONLINE
+                </div>
+                <!-- 专注模式联动显示 -->
+                <div id="hostFocusIndicator" class="hidden flex items-center gap-1.5 px-2.5 py-1 rounded bg-brand-warning/10 border border-brand-warning/20 text-brand-warning text-xs font-mono">
+                    <i class="fa-solid fa-moon text-xs"></i>
+                    SYSTEM FOCUS MODE
+                </div>
+                <div class="text-xs text-slate-400 font-mono" id="systemClock">10:42:30 AM</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-12 gap-6 my-auto items-stretch w-full max-h-[85vh]">
+            <!-- 左侧：开发者极致测试控制面板 (Sandbox Control Bar) - 拥有绝对操作性 -->
+            <div class="col-span-4 bg-slate-900/40 backdrop-blur-md rounded-xl border border-slate-800 p-5 flex flex-col gap-4 pointer-events-auto overflow-y-auto custom-scrollbar">
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-300 tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                        PROTOTYPE SANDBOX CONTROL
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-1">模拟各种真实情境、通知、系统限制及状态变化，用来触发并观察 Widget 的响应行为。</p>
+                </div>
+
+                <div class="h-[1px] bg-slate-800"></div>
+
+                <!-- 触发通知分类 -->
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">🔔 触发通知 (Step 7)</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="triggerNotification('L1')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex flex-col gap-0.5 group">
+                            <span class="font-semibold text-slate-300 group-hover:text-brand-500"><i class="fa-solid fa-bell-slash text-slate-400 mr-1 text-[10px]"></i> L1 静默</span>
+                            <span class="text-[9px] text-slate-500">仅更新角标</span>
+                        </button>
+                        <button onclick="triggerNotification('L2')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex flex-col gap-0.5 group">
+                            <span class="font-semibold text-slate-300 group-hover:text-brand-warning"><i class="fa-solid fa-message text-slate-400 mr-1 text-[10px]"></i> L2 轻提示</span>
+                            <span class="text-[9px] text-slate-500">摘要横幅滑出</span>
+                        </button>
+                        <button onclick="triggerNotification('L3')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex flex-col gap-0.5 group">
+                            <span class="font-semibold text-slate-300 group-hover:text-brand-error"><i class="fa-solid fa-circle-exclamation text-slate-400 mr-1 text-[10px]"></i> L3 强打断</span>
+                            <span class="text-[9px] text-slate-500">强制滑出卡片</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 模拟工作宿主场景感知 (Step 4.1.1.1) -->
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">💻 宿主场景感知 (Step 4.1.1.1)</span>
+                    <div class="relative bg-slate-800/40 border border-slate-700/60 rounded-lg p-2.5 flex flex-col gap-1.5 text-xs">
+                        <label class="text-[9px] text-slate-500 font-mono font-bold tracking-wider">SELECT ACTIVE HOST CONTEXT (切换焦点应用)</label>
+                        <select id="selHostContext" onchange="changeHostContext(this.value)" class="bg-slate-900 border border-slate-750 text-slate-200 p-2 rounded text-xs select-none focus:outline-none focus:border-indigo-500/50">
+                            <option value="general">🌐 通用网页 (General Web)</option>
+                            <option value="jira">📋 Jira 敏捷看板 (Jira Kanban)</option>
+                            <option value="email">📧 Email 邮件客户端 (Outlook/Mail)</option>
+                            <option value="vscode">💻 Code 编辑器 (VS Code Terminal)</option>
+                        </select>
+                        <span class="text-[9px] text-indigo-400 italic">焦点切换时，Hover 悬浮球呈现的智推荐命令菜单和 Prompt 策略将瞬间适配！</span>
+                    </div>
+                </div>
+
+                <!-- 专注模式联动 (Step 7.4) -->
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">🌙 系统设置 (Step 7.4)</span>
+                    <div class="flex gap-2">
+                        <button id="btnFocusMode" onclick="toggleSystemFocus()" class="flex-1 hover:bg-indigo-600/20 hover:border-indigo-500/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2">
+                            <i class="fa-regular fa-moon"></i>
+                            开启系统专注模式 (Focus Mode)
+                        </button>
+                        <button id="btnNetworkMode" onclick="toggleNetwork()" class="flex-1 hover:bg-brand-error/20 hover:border-brand-error/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-wifi"></i>
+                            模拟断网 (Offline)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 模拟 Agent 响应情境 -->
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">🤖 AGENT 响应情境模拟 (Step 6)</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="mockAgentScenario('short')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex items-center gap-2 text-slate-300">
+                            <i class="fa-solid fa-bolt text-emerald-400"></i>
+                            <div>
+                                <div class="font-medium text-slate-200">150字快答 (A类)</div>
+                                <div class="text-[9px] text-slate-500">高频轻问答，内部完成</div>
+                            </div>
+                        </button>
+                        <button onclick="mockAgentScenario('long')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex items-center gap-2 text-slate-300">
+                            <i class="fa-solid fa-file-invoice text-amber-400"></i>
+                            <div>
+                                <div class="font-medium text-slate-200">&gt;500字长答 (C类)</div>
+                                <div class="text-[9px] text-slate-500">超限制，触发软Escalation</div>
+                            </div>
+                        </button>
+                        <button onclick="mockAgentScenario('clarify')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex items-center gap-2 text-slate-300">
+                            <i class="fa-solid fa-circle-question text-sky-400"></i>
+                            <div>
+                                <div class="font-medium text-slate-200">选择澄清 (D类)</div>
+                                <div class="text-[9px] text-slate-500">意图模糊，提供最小化澄清</div>
+                            </div>
+                        </button>
+                        <button onclick="mockAgentScenario('destructive')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex items-center gap-2 text-slate-300">
+                            <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+                            <div>
+                                <div class="font-medium text-slate-200">不可逆操作 (E类)</div>
+                                <div class="text-[9px] text-slate-500">硬性安全限制，必定拦截</div>
+                            </div>
+                        </button>
+                        <button onclick="mockAgentScenario('background')" class="hover:bg-slate-700/60 transition-all text-left bg-slate-800/40 border border-slate-700 text-xs px-2.5 py-2 rounded flex items-center gap-2 col-span-2 text-slate-300">
+                            <i class="fa-solid fa-spinner text-indigo-400 animate-spin"></i>
+                            <div class="flex-1">
+                                <div class="font-medium text-slate-200">后台运行任务 (Step 6.7)</div>
+                                <div class="text-[9px] text-slate-500">缩起时继续执行，结束后角标伴随 L2 提示滑出</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 手动改变自身状态 -->
+                <div class="flex flex-col gap-2">
+                    <span class="text-xs font-semibold text-slate-400 font-mono uppercase tracking-wider">🩺 异常状态模拟 (Step 5.5)</span>
+                    <div class="flex gap-2">
+                        <button onclick="triggerSystemError('level3')" class="flex-1 hover:bg-red-500/20 hover:border-red-500/40 text-red-300 transition-all px-2.5 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-bug text-xs"></i>
+                            注入：Level 3 崩溃态
+                        </button>
+                        <button onclick="resetSystemState()" class="hover:bg-slate-700 transition-all px-3 py-2 bg-slate-800 border border-slate-700 rounded text-xs font-medium text-slate-200 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            重置
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-2 text-[10px] text-slate-500 font-mono flex flex-col gap-1">
+                    <span>* 快捷键呼叫：Ctrl + Shift + Space</span>
+                    <span>* 在吸边状态下，向一侧半隐藏。按鼠标 Hover 上去即可露出来。</span>
+                </div>
+            </div>
+
+            <!-- 中间/右侧：主应用运行大屏模拟、精美数据看板，打造完美真实感 -->
+            <div class="col-span-8 bg-slate-900/10 backdrop-blur-sm rounded-xl border border-slate-800/30 p-6 flex flex-col justify-between overflow-hidden relative">
+                <!-- 仪表盘组件 -->
+                <div class="flex flex-col gap-6">
+                    <div class="flex justify-between items-start">
+                        <div class="flex flex-col">
+                            <div class="text-[10px] text-emerald-400 font-mono font-bold tracking-wider tracking-widest uppercase">SYNERGY ANALYTICS DASHBOARD</div>
+                            <h2 class="text-2xl font-bold text-slate-100 tracking-tight">研发效能与每日会话漏斗分析</h2>
+                        </div>
+                        <div class="flex gap-2 text-xs text-slate-400 bg-slate-900 p-1 rounded border border-slate-800">
+                            <span class="bg-indigo-600/30 text-indigo-400 px-2 py-0.5 rounded font-medium">REALTIME</span>
+                            <span class="px-2 py-0.5">FILTER: 24H</span>
+                        </div>
+                    </div>
+
+                    <!-- 首排指标卡片 -->
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800/50">
+                            <div class="text-[10px] text-slate-500 font-mono tracking-wider">ACTIVE AGENT SESSIONS</div>
+                            <div class="text-xl font-bold text-slate-200 mt-1">1,482</div>
+                            <div class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                                +12.4% vs yesterday
+                            </div>
+                        </div>
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800/50">
+                            <div class="text-[10px] text-slate-500 font-mono tracking-wider">STREAMS RESPONSE TIMING</div>
+                            <div class="text-xl font-bold text-slate-200 mt-1">214 ms</div>
+                            <div class="text-[10px] text-emerald-400 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-angle-down"></i>
+                                -18% response latency
+                            </div>
+                        </div>
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800/50">
+                            <div class="text-[10px] text-slate-500 font-mono tracking-wider">ESCALATION CONV. RATE</div>
+                            <div class="text-xl font-bold text-amber-500 mt-1">4.21 %</div>
+                            <div class="text-[10px] text-amber-400/80 mt-1 flex items-center gap-1">
+                                <i class="fa-solid fa-arrows-split-up-and-left"></i>
+                                D-04 Target: &lt; 5%
+                            </div>
+                        </div>
+                        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-800/50">
+                            <div class="text-[10px] text-slate-500 font-mono tracking-wider">TOTAL BACKEND PIPELINES</div>
+                            <div class="text-xl font-bold text-indigo-400 mt-1">29 running</div>
+                            <div class="text-[10px] text-slate-500 mt-1">WebSocket maintains on</div>
+                        </div>
+                    </div>
+
+                    <!-- 模拟代码编辑器片段（程序员最爱，展现完美的代码质感） -->
+                    <div class="bg-slate-950/70 p-4 rounded-lg border border-slate-800 font-mono text-xs flex flex-col gap-2 relative">
+                        <div class="absolute right-3 top-3 text-[10px] text-slate-600 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">C++ / Go Backend</div>
+                        <div class="flex items-center gap-2 border-b border-slate-800 pb-2 mb-2 text-slate-500 text-[10px]">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500/60"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/60"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/60"></span>
+                            <span class="ml-2 font-mono select-all">src/pipelines/agent_orchestrator.rs</span>
+                        </div>
+                        <pre class="text-[10px] text-slate-400 leading-relaxed overflow-x-auto"><span class="text-indigo-400">pub async fn</span> <span class="text-amber-400">evaluate_escalation_heuristics</span>(ctx: &Context, input: &InputPayload) -> Decision {
+    <span class="text-emerald-500">// 遵循 UX 规范 6.3 判定规则</span>
+    <span class="text-rose-400">if</span> input.len() &gt; <span class="text-emerald-400">200</span> {
+        log_event(<span class="text-emerald-400">"escalation_suggested"</span>, <span class="text-emerald-400">"input_too_long"</span>);
+        <span class="text-rose-400">return</span> Decision::SoftEscalation { reason: <span class="text-emerald-400">"input_too_long"</span> };
+    }
+    <span class="text-rose-400">if</span> ctx.session_rounds &gt;= <span class="text-emerald-400">7</span> {
+        <span class="text-rose-400">return</span> Decision::SoftEscalation { reason: <span class="text-emerald-400">"max_depth_reached"</span> };
+    }
+    Decision::PerformInWidget
+}</pre>
+                    </div>
+                </div>
+
+                <div class="text-center text-xs text-slate-600 border-t border-slate-800/30 pt-4 mt-6">
+                    Lumina Agent System · 此页面仅用于宿主程序背景逼真度模拟与演示交互，一切可交互原型均在右侧常驻 Widget 悬浮窗中展开。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 元素：L1 通知冷却与专注模式过渡状态面板（悬浮屏幕上方） -->
+    <!-- ========================================== -->
+    <div id="sandboxToast" class="fixed top-8 left-1/2 -translate-x-1/2 bg-slate-900/90 text-slate-100 border border-slate-800 px-4 py-2.5 rounded-lg shadow-xl shadow-black/40 z-50 flex items-center gap-2.5 text-xs select-none pointer-events-none opacity-0 scale-95">
+        <i id="sandboxToastIcon" class="fa-solid fa-circle-check text-brand-500"></i>
+        <span id="sandboxToastText">测试信息已被执行</span>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LAYER 3 主应用模拟容器 (Main App Screen Overlay) -->
+    <!-- ========================================== -->
+    <div id="mainAppSimulator" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-lg flex items-center justify-center p-8 select-none opacity-0 pointer-events-none transition-all duration-500">
+        <div class="bg-slate-900 w-full max-w-4xl h-[80vh] rounded-2xl border border-slate-800 shadow-2xl flex flex-col overflow-hidden transform scale-95 transition-all duration-500">
+            <!-- 头部 -->
+            <div class="bg-slate-950/60 px-6 py-4 flex justify-between items-center border-b border-indigo-950/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-6 h-6 rounded-full bg-indigo-500/20 border border-indigo-400 flex items-center justify-center">
+                        <span class="text-[10px] text-indigo-400 font-extrabold font-mono">L</span>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-semibold tracking-wider text-slate-100">LUMINA CLOUD DESKTOP</h2>
+                        <p class="text-[10px] text-slate-500">协作环境主终端 · 完美继承 Widget 所有的历史上下文包 (Layer 3 Context Pack)</p>
+                    </div>
+                </div>
+                <!-- 开发者关闭此主应用 -->
+                <button onclick="closeMainAppSimulator()" class="hover:bg-slate-800/80 transition-all text-xs font-semibold uppercase tracking-wider px-3.5 py-1.5 rounded-md bg-slate-800/40 border border-slate-700 text-slate-300">
+                    <i class="fa-solid fa-arrow-left-long mr-2"></i>返回 Widget 协作层
+                </button>
+            </div>
+
+            <!-- 主内容 -->
+            <div class="flex-1 p-8 grid grid-cols-12 gap-8 overflow-y-auto custom-scrollbar">
+                <!-- 左半部：回显 Widget 移交的 Context -->
+                <div class="col-span-5 flex flex-col gap-4">
+                    <h3 class="text-xs font-mono font-bold text-indigo-400 uppercase tracking-widest">📂 RECEIVING DATA PAYLOAD</h3>
+                    <div class="bg-slate-950 p-5 rounded-lg border border-slate-850 font-mono text-xs text-slate-300 overflow-y-auto h-[45vh] custom-scrollbar">
+                        <pre id="jsonPayloadField" class="text-brand-active selection:bg-brand-active/20">正在解析迁移句柄...</pre>
+                    </div>
+                    <div class="p-3 bg-slate-850/50 rounded border border-slate-800 text-[10px] text-slate-400 leading-relaxed">
+                        <i class="fa-solid fa-circle-info text-indigo-400 mr-1.5"></i>
+                        主应用已完美恢复了您在 Widget 中写下的<strong>草稿内容、对话上下文</strong>和其判定意图。没有引起任何的工作打断及流程跳转损害。
+                    </div>
+                </div>
+
+                <!-- 右半部：模拟操作工作区 -->
+                <div class="col-span-7 flex flex-col gap-6 select-text pointer-events-auto">
+                    <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 flex gap-3 text-emerald-400">
+                        <i class="fa-regular fa-square-check text-xl mt-0.5"></i>
+                        <div>
+                            <div class="text-xs font-bold font-mono">CONV_SHIFT_SUCCESS (会话无损移交成功)</div>
+                            <div class="text-xs text-slate-400 mt-1">此模式代表 <strong>Escalation / Navigation</strong>。所有已加载的历史记录和输入草稿均已移交至此处。您可以在这款宽大屏幕中编辑长文本、进行批量不可逆安全审批或进行更加精读的分析任务。</div>
+                        </div>
+                    </div>
+
+                    <div class="flex-1 flex flex-col gap-3 justify-center">
+                        <h4 class="text-sm font-semibold text-slate-200">主应用大编辑协作区</h4>
+                        <div class="bg-slate-950/40 border border-slate-800 rounded-lg p-5 flex flex-col gap-3">
+                            <label class="text-xs text-slate-500 font-medium">Draft恢复器 (可编辑长文本):</label>
+                            <textarea id="mainAppDraftArea" class="w-full h-32 bg-slate-900 border border-slate-750 rounded-md p-3 text-xs text-slate-200 focus:outline-none focus:border-indigo-500/50 font-mono leading-relaxed" placeholder="输入草稿暂无内容"></textarea>
+                            <div class="flex justify-between items-center mt-2.5">
+                                <span class="text-[10px] text-slate-500"><i class="fa-solid fa-code mr-1"></i> 多重分析已就绪</span>
+                                <button onclick="closeMainAppSimulator()" class="bg-indigo-600 hover:bg-indigo-500 transition-all text-xs font-semibold text-white px-4 py-1.5 rounded flex items-center gap-1.5 shadow-lg shadow-indigo-600/25">
+                                    <i class="fa-regular fa-paper-plane"></i>
+                                    更新此工作台并完成
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-slate-950/30 px-6 py-3 border-t border-slate-850 flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                <span>SESSION_ID: <span id="lblSessionId">-</span></span>
+                <span>SYSTEM ENCRYPTION SHIELD ACTIVE</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- LAYER 1: LUMINA COLLAPSED TRIGGER (悬浮球入口) -->
+    <!-- ========================================== -->
+    <div id="luminaTrigger" class="fixed z-40 select-none cursor-pointer flex items-center justify-center">
+        <!-- 悬浮球本体 -->
+        <div id="triggerButton" class="w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 shadow-glow flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-200 border border-brand-500/20 relative group">
+            
+            <!-- 圆环呼吸动效（Agent 执行中） -->
+            <div id="triggerStatusRing" class="hidden absolute inset-[-4px] rounded-full border-2 border-brand-active/50 opacity-0 ring-active-breathe"></div>
+            
+            <!-- Lumina 精美科技 Logo SVG -->
+            <svg id="triggerLogo" class="w-7 h-7 text-white drop-shadow-md transition-all duration-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L15 8.5L22 9.5L17 14.5L18.5 21.5L12 18L5.5 21.5L7 14.5L2 9.5L9 8.5L12 2Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M12 6L13.8 10L18 10.6L15 13.6L15.9 17.8L12 15.8V6Z" fill="#00e1d9"/>
+            </svg>
+
+            <!-- 待处理角标数字 (Badge, Step 3.2 L1) -->
+            <div id="triggerBadge" class="hidden absolute -top-1.5 -right-1.5 bg-brand-error text-white font-mono font-bold text-[10px] leading-tight px-1.5 py-0.5 rounded-full border-2 border-slate-950 flex items-center justify-center animate-bounce min-w-[20px] h-[20px]">
+                0
+            </div>
+
+            <!-- 轻提示摘要滑出卡片 (L2 Tooltip, Step 7.2 L2) -->
+            <div id="lightNotificationBanner" class="absolute right-[70px] bg-slate-900/95 text-slate-100 border border-brand-500/30 rounded-lg p-3 shadow-xl w-64 text-xs select-none pointer-events-none opacity-0 scale-90 translate-x-4 transition-all duration-300 flex flex-col gap-1.5">
+                <div class="flex justify-between items-center text-[10px] text-brand-active font-mono uppercase tracking-wider">
+                    <span>💬 LUMINA 轻提示</span>
+                    <span class="text-slate-500">刚刚</span>
+                </div>
+                <div id="lightNotificationText" class="text-slate-200 leading-normal font-medium truncate-2-lines"></div>
+                <div class="text-[9px] text-slate-500 flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-pointer text-[8px]"></i>
+                    <span>点击悬浮球可快速处理</span>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- Copilot 模式：Hover 态悬停高频推荐卡片 (Step 4.1.1) -->
+            <!-- ========================================== -->
+            <div id="hoverRecommendCard" class="absolute right-[70px] bottom-[36px] text-slate-100 text-xs select-none pointer-events-none opacity-0 scale-90 translate-x-4 transition-all duration-300 flex flex-col gap-1.5 z-50 w-max items-end">
+                <span id="hoverCardTitle" class="hidden"></span>
+                <span id="hoverCardSubtitle" class="hidden"></span>
+                <div id="recommendActionsContainer" class="flex flex-col gap-1.5 pointer-events-auto items-end">
+                    <!-- 动作按钮将被脚本动态插入 -->
+                </div>
+            </div>
+            
+            <!-- 指导文字说明 -->
+            <div id="dragGuide" class="absolute -bottom-8 bg-slate-900/80 px-2 py-0.5 border border-slate-800 text-[9px] text-slate-400 rounded opacity-0 scale-90 transition-all pointer-events-none whitespace-nowrap">
+                可任意拖动 · 按住拉拽
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         RIGHT-CLICK CONTEXT MENU (Step 4 · 二级入口)
+         ========================================== -->
+    <div id="triggerContextMenu" class="fixed z-[9200] pointer-events-none opacity-0 scale-95 origin-top-left select-none"
+         style="min-width:180px">
+        <div class="bg-slate-900/98 backdrop-blur-xl border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden text-xs text-slate-200 py-1">
+            <!-- 组 1：打开 / 新建 -->
+            <button onclick="ctxMenuAction('open')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-wand-magic-sparkles text-brand-active text-[11px] w-3.5"></i>
+                <span>打开助手</span>
+            </button>
+            <button onclick="ctxMenuAction('new')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-plus text-slate-400 text-[11px] w-3.5"></i>
+                <span>新建对话</span>
+            </button>
+            <!-- 分割线 -->
+            <div class="my-1 border-t border-slate-800/80"></div>
+            <!-- 组 2：上下文动作 -->
+            <button onclick="ctxMenuAction('screenshot')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-camera-viewfinder text-violet-400 text-[11px] w-3.5"></i>
+                <span>截图提问</span>
+            </button>
+            <button onclick="ctxMenuAction('identify')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-eye text-indigo-400 text-[11px] w-3.5"></i>
+                <span>识别当前页面</span>
+            </button>
+            <button onclick="ctxMenuAction('translate')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-language text-sky-400 text-[11px] w-3.5"></i>
+                <span>翻译选中内容</span>
+            </button>
+            <!-- 分割线 -->
+            <div class="my-1 border-t border-slate-800/80"></div>
+            <!-- 组 3：系统 -->
+            <button onclick="ctxMenuAction('settings')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-700/50 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-gear text-slate-400 text-[11px] w-3.5"></i>
+                <span>设置</span>
+            </button>
+            <button onclick="ctxMenuAction('quit')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-red-500/15 hover:text-red-300 text-slate-400 transition-colors duration-150 group">
+                <i class="fa-solid fa-power-off text-[11px] w-3.5"></i>
+                <span>退出</span>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- LAYER 2: EXPANDED WIDGET PANEL (展开区) -->
+    <!-- ========================================== -->
+    <div id="luminaExpandedPanel" class="fixed z-40 select-none w-[360px] h-[580px] max-h-[80vh] rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-800 shadow-panel flex flex-col overflow-hidden opacity-0 pointer-events-none transform scale-95 origin-bottom-right">
+        
+        <!-- 拖模悬浮提示（Drag File Overlay） -->
+        <div id="fileDragOverlay" class="absolute inset-0 z-50 bg-brand-500/15 border-2 border-dashed border-brand-500/80 m-2 rounded-lg flex flex-col items-center justify-center gap-2 transition-all duration-300 opacity-0 pointer-events-none">
+            <div class="w-12 h-12 rounded-full bg-brand-500/10 flex items-center justify-center text-brand-500 animate-bounce">
+                <i class="fa-solid fa-cloud-arrow-up text-xl"></i>
+            </div>
+            <div class="text-sm font-semibold text-slate-200">将文件拖拽上传至 Widget</div>
+            <div class="text-[10px] text-slate-400">单文件 &lt; 10MB (超出引导 Escalation)</div>
+        </div>
+
+        <!-- ────────────────────────────────────────── -->
+        <!-- HEADER (固定 48px, Step 3.3) -->
+        <!-- ────────────────────────────────────────── -->
+        <div class="h-12 bg-slate-950/80 px-4 flex items-center justify-between border-b border-slate-800/80 relative cursor-grab active:cursor-grabbing" id="panelHeader">
+            <div class="flex items-center gap-2">
+                <!-- 连接与状态指示圆点 -->
+                <div class="relative flex items-center justify-center w-2.5 h-2.5">
+                    <span id="headerStatusDotPulse" class="absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75 animate-ping"></span>
+                    <span id="headerStatusDot" class="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-xs font-bold tracking-wider text-slate-200">Lumina Widget</span>
+                    <span id="headerBadgeOffline" class="hidden text-[8px] bg-red-500/20 text-red-400 border border-red-500/20 px-1 py-0.5 rounded font-mono uppercase">离线</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5 pointer-events-auto">
+                <!-- 专注于动作 / 历史 / 隐藏按钮 -->
+                <button onclick="toggleWidgetFocus()" id="panelHeaderFocusBtn" class="w-7 h-7 hover:bg-slate-800 rounded flex items-center justify-center text-slate-400 hover:text-brand-warning transition-all" title="手动专注模式">
+                    <i class="fa-regular fa-moon text-xs"></i>
+                </button>
+                <div class="w-[1px] h-3 bg-slate-800"></div>
+                <button onclick="collapseWidget()" class="w-7 h-7 hover:bg-slate-800 rounded flex items-center justify-center text-slate-400 hover:text-slate-200 transition-all" title="关闭页面 (Esc)">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ────────────────────────────────────────── -->
+        <!-- CONTENT (最大高度 80vh 内部滚动, Step 3.3) -->
+        <!-- ────────────────────────────────────────── -->
+        <div id="panelContentContainer" class="flex-1 overflow-y-auto p-4 custom-scrollbar flex flex-col gap-4 bg-slate-900/50">
+            
+            <!-- 首次空卡片：显示 3 个 P0 模块 (Step 5.2) -->
+            <div id="chatEmptyState" class="flex flex-col gap-4 my-auto select-none">
+                <div class="text-center p-4">
+                    <div class="w-10 h-10 rounded-full bg-brand-500/10 text-brand-500 flex items-center justify-center mx-auto mb-3">
+                        <i class="fa-solid fa-compass text-base animate-pulse"></i>
+                    </div>
+                    <h3 class="text-sm font-semibold text-slate-200">有什么需要帮忙的？</h3>
+                    <p class="text-[11px] text-slate-500 mt-1 select-text">
+                        我是您的轻量执行窗口，擅长快问快答和自动轻任务。
+                    </p>
+                </div>
+                
+                <div class="flex flex-col gap-2">
+                    <label class="text-[10px] text-slate-500 font-mono font-bold tracking-wider uppercase px-1">💡 首次推荐助手</label>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="useQuickP0('查询今日待办')" class="p-3 bg-slate-950/40 hover:bg-slate-800/50 border border-slate-800 rounded-lg text-left text-xs text-slate-300 transition-all flex items-center justify-between group">
+                            <span class="group-hover:text-white transition-all max-w-[240px] truncate">查询今日待办清单 (/todo)</span>
+                            <i class="fa-solid fa-arrow-right text-[10px] text-slate-500 group-hover:text-brand-500 group-hover:translate-x-1 duration-200"></i>
+                        </button>
+                        <button onclick="useQuickP0('总结最近文档')" class="p-3 bg-slate-950/40 hover:bg-slate-800/50 border border-slate-800 rounded-lg text-left text-xs text-slate-300 transition-all flex items-center justify-between group">
+                            <span class="group-hover:text-white transition-all max-w-[240px] truncate">帮我总结最近一份 PDF 技术报告</span>
+                            <i class="fa-solid fa-arrow-right text-[10px] text-slate-500 group-hover:text-brand-500 group-hover:translate-x-1 duration-200"></i>
+                        </button>
+                        <button onclick="useQuickP0('发起代码审查')" class="p-3 bg-slate-950/40 hover:bg-slate-800/50 border border-slate-800 rounded-lg text-left text-xs text-slate-300 transition-all flex items-center justify-between group">
+                            <span class="group-hover:text-white transition-all max-w-[240px] truncate">发起并重构刚才的代码片段</span>
+                            <i class="fa-solid fa-arrow-right text-[10px] text-slate-500 group-hover:text-brand-500 group-hover:translate-x-1 duration-200"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 消息历史容器 -->
+            <div id="chatMessageFlow" class="hidden flex flex-col gap-4 flex-1">
+                <!-- 预制首条欢迎消息 -->
+                <div class="flex gap-2.5 items-start">
+                    <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                        AI
+                    </div>
+                    <div class="bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none p-3 text-xs text-slate-200 max-w-[85%] leading-relaxed">
+                        你好！已激活轻量操作面板窗口，我将遵循不打断、不跳转、快速执行的原则为您服务。有什么可以直接询问？
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ────────────────────────────────────────── -->
+        <!-- INPUT & FOOTER (固定底部输入区, Step 3.3) -->
+        <!-- ────────────────────────────────────────── -->
+        <div class="bg-slate-950/95 border-t border-slate-800/80 p-3 flex flex-col gap-2 relative" id="panelInputContainer">
+            
+            <!-- 指令辅助弹窗 (Step 4.4 /) -->
+            <div id="slashCommandMenu" class="hidden absolute left-3 right-3 bottom-[calc(100%+8px)] bg-slate-900 border border-slate-800 text-xs rounded-lg shadow-2xl flex flex-col overflow-hidden max-h-48 z-40 transform translate-y-2 transition-all">
+                <div class="bg-slate-950/60 px-3 py-1.5 text-[9px] text-slate-500 font-mono font-bold border-b border-slate-800 flex items-center gap-1">
+                    <i class="fa-solid fa-terminal text-[8px]"></i>
+                    PRESENTS COMMANDS (快捷指令)
+                </div>
+                <div class="flex-1 overflow-y-auto no-scrollbar py-1">
+                    <button onclick="applySlashCommand('/todo')" class="w-full text-left px-3 py-2 hover:bg-brand-500/10 text-slate-300 flex items-center gap-2 border-b border-slate-850/40">
+                        <span class="font-mono font-bold text-brand-500 w-14">/todo</span>
+                        <span class="text-[10px] text-slate-500">创建并归档一个新的项目任务待办卡片</span>
+                    </button>
+                    <button onclick="applySlashCommand('/search')" class="w-full text-left px-3 py-2 hover:bg-brand-500/10 text-slate-300 flex items-center gap-2 border-b border-slate-850/40">
+                        <span class="font-mono font-bold text-brand-500 w-14">/search</span>
+                        <span class="text-[10px] text-slate-500">快速进行全库搜索引擎式检索</span>
+                    </button>
+                    <button onclick="applySlashCommand('/help')" class="w-full text-left px-3 py-2 hover:bg-brand-500/10 text-slate-300 flex items-center gap-2">
+                        <span class="font-mono font-bold text-brand-500 w-14">/help</span>
+                        <span class="text-[10px] text-slate-500">获取 Widget 相关的全部交互说明书</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="flex items-end gap-2 relative bg-slate-900 rounded-lg border border-slate-800 px-2.5 py-1.5 focus-within:border-brand-500/50 transition-all">
+                <!-- 附件纸夹，支持 A11y 焦点 (Step 4.4) -->
+                <button onclick="triggerFileSelectSimulate()" class="w-7 h-7 rounded hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-200 transition-all relative flex-shrink-0" title="上传附件 (大文件 &gt;10MB 拦截)" id="btnAttachment">
+                    <i class="fa-solid fa-paperclip text-sm"></i>
+                </button>
+                
+                <!-- 行输入框 (Step 4.4) -->
+                <textarea id="widgetInputArea" rows="1" class="flex-1 bg-transparent border-none text-xs text-slate-200 placeholder:text-slate-500 focus:ring-0 focus:outline-none py-1 resize-none max-h-[120px] custom-scrollbar" placeholder="有什么需要帮忙的？(拼写 / 唤出菜单)" oninput="handleInputBehaviour(this)"></textarea>
+
+                <!-- 字符及警告计数器 (Step 4.4) -->
+                <div id="charCounter" class="hidden text-[9px] font-mono select-none px-1.5 py-0.5 rounded text-slate-500">
+                    0/200
+                </div>
+
+                <!-- 发送按钮 -->
+                <button onclick="submitUserMessage()" id="btnSendMessage" class="w-7 h-7 rounded bg-brand-500/10 hover:bg-brand-500 text-slate-400 hover:text-white flex items-center justify-center transition-all flex-shrink-0" title="发送 (Enter)">
+                    <i class="fa-solid fa-paper-plane text-xs"></i>
+                </button>
+            </div>
+
+            <!-- 底下反馈：说明有正在执行 / 草稿字样 -->
+            <div class="flex justify-between items-center px-1 text-[9px] text-slate-500">
+                <span id="footerUsageTips">支持拖拽文件/截图到此处</span>
+                <span class="font-mono">CTRL + ↩ 强制发</span>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // ==========================================
+        // 全局状态管理
+        // ==========================================
+        const state = {
+            isWidgetExpanded: false,
+            widgetCurrentPosition: { x: window.innerWidth - 80, y: window.innerHeight / 2 - 28 }, // 默认位置
+            isDraggableSnapping: true,
+            isDragging: false,
+            dragStartPos: { x: 0, y: 0 },
+            
+            // 通知机制
+            unreadCount: 0,
+            isFocused: false, // 专注模式
+            isOffline: false, // 网络离线
+            lastL3NotificationTime: 0, // D-02 冷却计时
+            l1l2NotificationList: [],
+            
+            // 会话机制
+            sessionCount: 0,
+            currentDraft: "",
+            isAgentResponding: false,
+            currentStreamingTimer: null,
+            useP0SuggestionCount: 0, // P0 用过3次消失
+            chatHistory: [],
+
+            // Hover 态高频推荐
+            hoverRecommendTimer: null,
+            leaveRecommendTimer: null,
+            activeHostContext: 'general'
+        };
+
+        // UI 引用
+        const trigger = document.getElementById('luminaTrigger');
+        const triggerBtn = document.getElementById('triggerButton');
+        const triggerStatusRing = document.getElementById('triggerStatusRing');
+        const triggerBadge = document.getElementById('triggerBadge');
+        const triggerLogo = document.getElementById('triggerLogo');
+        const lightBanner = document.getElementById('lightNotificationBanner');
+        const lightBannerText = document.getElementById('lightNotificationText');
+        const hoverCard = document.getElementById('hoverRecommendCard');
+        const hoverCardTitle = document.getElementById('hoverCardTitle');
+        const hoverCardSubtitle = document.getElementById('hoverCardSubtitle');
+        const recommendActionsContainer = document.getElementById('recommendActionsContainer');
+        
+        const panel = document.getElementById('luminaExpandedPanel');
+        const widgetInput = document.getElementById('widgetInputArea');
+        const charCounter = document.getElementById('charCounter');
+        const slashMenu = document.getElementById('slashCommandMenu');
+        const hostNetworkIndicator = document.getElementById('hostNetworkIndicator');
+        const hostFocusIndicator = document.getElementById('hostFocusIndicator');
+        const systemClock = document.getElementById('systemClock');
+
+        // ==========================================
+        // SYSTEM INIT (系统初始化)
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            initSystemClock();
+            initDraggableTrigger();
+            initContextMenu();         // 注册右键二级入口菜单
+            applyTriggerLayoutAndPosition();
+            initKeyboardShortcuts();
+            initDragAndDrop();
+            initHoverRecommendations(); // 注册智能 Hover 高频推荐
+            
+            // 首次状态
+            resetSystemState();
+        });
+
+        // 刷新时间
+        function initSystemClock() {
+            setInterval(() => {
+                const now = new Date();
+                systemClock.innerText = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }, 1000);
+        }
+
+        // ==========================================
+        // RIGHT-CLICK CONTEXT MENU (Step 4 · 二级入口)
+        // ==========================================
+        const ctxMenu = document.getElementById('triggerContextMenu');
+
+        function initContextMenu() {
+            // 阻止悬浮球上的系统右键菜单，换成我们的定制菜单
+            triggerBtn.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                showContextMenu(e.clientX, e.clientY);
+            });
+
+            // 点击页面任意位置关闭菜单
+            document.addEventListener('mousedown', (e) => {
+                if (!ctxMenu.contains(e.target)) {
+                    hideContextMenu();
+                }
+            });
+
+            // Esc 关闭菜单
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') hideContextMenu();
+            });
+        }
+
+        function showContextMenu(x, y) {
+            // 避开屏幕边缘溢出
+            const menuW = 188;
+            const menuH = 280;
+            const safeX = Math.min(x, window.innerWidth - menuW - 8);
+            const safeY = Math.min(y, window.innerHeight - menuH - 8);
+
+            ctxMenu.style.left = safeX + 'px';
+            ctxMenu.style.top  = safeY + 'px';
+            ctxMenu.style.pointerEvents = 'auto';
+
+            gsap.killTweensOf(ctxMenu);
+            gsap.fromTo(ctxMenu,
+                { opacity: 0, scale: 0.92, y: -6 },
+                { opacity: 1, scale: 1, y: 0, duration: 0.18, ease: 'power2.out' }
+            );
+        }
+
+        function hideContextMenu() {
+            if (parseFloat(ctxMenu.style.opacity) === 0) return;
+            gsap.killTweensOf(ctxMenu);
+            gsap.to(ctxMenu, {
+                opacity: 0, scale: 0.94, y: -4,
+                duration: 0.13, ease: 'power2.in',
+                onComplete: () => { ctxMenu.style.pointerEvents = 'none'; }
+            });
+        }
+
+        function ctxMenuAction(action) {
+            hideContextMenu();
+            switch (action) {
+                case 'open':
+                    if (!state.isWidgetExpanded) expandWidget();
+                    break;
+                case 'new':
+                    if (state.isWidgetExpanded) collapseWidget();
+                    setTimeout(() => {
+                        expandWidget();
+                        setTimeout(() => {
+                            const flow = document.getElementById('chatMessageFlow');
+                            if (flow) flow.innerHTML = '';
+                            widgetInput.value = '';
+                            handleInputBehaviour(widgetInput);
+                        }, 300);
+                    }, 200);
+                    break;
+                case 'screenshot':
+                    expandWidget();
+                    setTimeout(() => {
+                        widgetInput.value = '[截图已附加] 请帮我分析这张截图的内容';
+                        handleInputBehaviour(widgetInput);
+                        submitUserMessage();
+                    }, 350);
+                    break;
+                case 'identify':
+                    expandWidget();
+                    setTimeout(() => {
+                        widgetInput.value = '识别并总结当前页面的核心内容，提炼关键信息';
+                        handleInputBehaviour(widgetInput);
+                        submitUserMessage();
+                    }, 350);
+                    break;
+                case 'translate':
+                    expandWidget();
+                    setTimeout(() => {
+                        widgetInput.value = '翻译以下选中内容为中文："The quick brown fox jumps over the lazy dog."';
+                        handleInputBehaviour(widgetInput);
+                        submitUserMessage();
+                    }, 350);
+                    break;
+                case 'settings':
+                    showSandboxToast('⚙️ 设置面板（主应用功能，此处为演示占位）');
+                    break;
+                case 'quit':
+                    showSandboxToast('👋 退出 Lumina Widget（此处为演示占位）');
+                    if (state.isWidgetExpanded) collapseWidget();
+                    break;
+            }
+        }
+
+        // ==========================================
+        // STEP 4.1: DRAG & SNAP (拖拽和吸边规则)
+        // ==========================================
+        function initDraggableTrigger() {
+            let startOffsetX = 0;
+            let startOffsetY = 0;
+
+            trigger.addEventListener('mousedown', (e) => {
+                // 右键不触发拖拽，交由 contextmenu 事件处理
+                if (e.button === 2) return;
+                // 如果鼠标点在了内联滑出的 Banner 或推荐卡片上则不拖拽
+                if (e.target.closest('#lightNotificationBanner') || e.target.closest('#hoverRecommendCard')) return;
+                
+                state.isDragging = true;
+                state.dragStartPos = { x: e.clientX, y: e.clientY };
+                
+                const rect = trigger.getBoundingClientRect();
+                startOffsetX = e.clientX - rect.left;
+                startOffsetY = e.clientY - rect.top;
+                
+                document.getElementById('dragGuide').classList.add('opacity-100', 'scale-100');
+                
+                document.addEventListener('mousemove', onDragging);
+                document.addEventListener('mouseup', onDragEnd);
+                
+                triggerBtn.style.cursor = 'grabbing';
+            });
+
+            // 触摸屏兼容
+            trigger.addEventListener('touchstart', (e) => {
+                if (e.target.closest('#lightNotificationBanner') || e.target.closest('#hoverRecommendCard')) return;
+                state.isDragging = true;
+                const touch = e.touches[0];
+                state.dragStartPos = { x: touch.clientX, y: touch.clientY };
+                
+                const rect = trigger.getBoundingClientRect();
+                startOffsetX = touch.clientX - rect.left;
+                startOffsetY = touch.clientY - rect.top;
+                
+                document.addEventListener('touchmove', onTouchDragging);
+                document.addEventListener('touchend', onDragEnd);
+            });
+
+            function onDragging(e) {
+                if (!state.isDragging) return;
+                moveTriggerTo(e.clientX - startOffsetX, e.clientY - startOffsetY);
+            }
+
+            function onTouchDragging(e) {
+                if (!state.isDragging) return;
+                const touch = e.touches[0];
+                moveTriggerTo(touch.clientX - startOffsetX, touch.clientY - startOffsetY);
+            }
+
+            function moveTriggerTo(x, y) {
+                // 限制边界在屏幕内
+                const buffer = 10;
+                x = Math.max(buffer, Math.min(window.innerWidth - 64 - buffer, x));
+                y = Math.max(buffer, Math.min(window.innerHeight - 64 - buffer, y));
+                
+                state.widgetCurrentPosition = { x, y };
+                trigger.style.left = `${x}px`;
+                trigger.style.top = `${y}px`;
+                
+                // 如果展开状态一直同步移动(体验连贯)
+                if (state.isWidgetExpanded) {
+                    alignPanelPosition();
+                }
+            }
+
+            function onDragEnd(e) {
+                if (!state.isDragging) return;
+                state.isDragging = false;
+                
+                document.removeEventListener('mousemove', onDragging);
+                document.removeEventListener('mouseup', onDragEnd);
+                document.removeEventListener('touchmove', onTouchDragging);
+                document.removeEventListener('touchend', onDragEnd);
+                
+                document.getElementById('dragGuide').classList.remove('opacity-100', 'scale-100');
+                triggerBtn.style.cursor = 'pointer';
+                
+                // 判断是否是单纯的点击（移动距离小于 5px，不属于拖拽）
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+                if (!clientX && e.changedTouches) {
+                    clientX = e.changedTouches[0].clientX;
+                    clientY = e.changedTouches[0].clientY;
+                }
+                const distance = Math.hypot(clientX - state.dragStartPos.x, clientY - state.dragStartPos.y);
+                
+                if (distance < 5) {
+                    // 点击行为：展开或折叠 Widget (Step 4.2)
+                    toggleWidgetView();
+                } else {
+                    // 拖拽吸边判定 (Step 4.1)
+                    performAutoSnapping();
+                }
+            }
+        }
+
+        // 应用初始位置
+        function applyTriggerLayoutAndPosition() {
+            trigger.style.left = `${state.widgetCurrentPosition.x}px`;
+            trigger.style.top = `${state.widgetCurrentPosition.y}px`;
+        }
+
+        // 自动吸附机制
+        function performAutoSnapping() {
+            const screenW = window.innerWidth;
+            const curX = state.widgetCurrentPosition.x;
+            const threshold = 120; // 边界触发值 (规范是左 < 80px, 右 < 80px，我们调到 120px 体验更敏感明显)
+            
+            let destX = curX;
+            let isSnappedLeft = false;
+            let isSnappedRight = false;
+
+            if (curX < threshold) {
+                // 吸附左侧
+                destX = -32; // 只露出 20px (悬浮球宽 56px, -32 刚好露出 24px)
+                isSnappedLeft = true;
+            } else if (curX > (screenW - 56 - threshold)) {
+                // 吸附右侧
+                destX = screenW - 24; // 只露出 24px
+                isSnappedRight = true;
+            }
+
+            state.snappedLeft = isSnappedLeft;
+            state.snappedRight = isSnappedRight;
+
+            gsap.to(trigger, {
+                left: destX,
+                duration: 0.4,
+                ease: 'power3.out',
+                onComplete: () => {
+                    state.widgetCurrentPosition.x = destX;
+                    if (isSnappedLeft || isSnappedRight) {
+                        setTriggerHalfHidden(true);
+                    } else {
+                        setTriggerHalfHidden(false);
+                    }
+                }
+            });
+        }
+
+        // 半隐藏状态处理 (Step 4.1)
+        function setTriggerHalfHidden(hidden) {
+            if (hidden) {
+                gsap.to(triggerBtn, { opacity: 0.5, scale: 0.9, duration: 0.2 });
+            } else {
+                gsap.to(triggerBtn, { opacity: 1, scale: 1, duration: 0.2 });
+            }
+        }
+
+        // ==========================================
+        // STEP 4.1.1: HOVER RECOMMENDATIONS (Hover 态高频推荐卡片与多端耦合感知)
+        // ==========================================
+        const contextRecommendConfigs = {
+            general: {
+                title: "What can I help with?",
+                subtitle: "GENERAL Mode",
+                actions: [
+                    { id: 'gen_summarize', icon: 'fa-file-invoice', color: 'text-indigo-400', label: '总结当前页面', prompt: '总结当前活动窗口的分析内容并输出 3 行摘要' },
+                    { id: 'gen_explain', icon: 'fa-wand-magic-sparkles', color: 'text-indigo-400', label: '解释选中内容', prompt: '解释刚才在宿主剪贴板内捕获的选中内容: class WebSocketResilienceConnector { fn init() {...} }' },
+                    { id: 'gen_todo', icon: 'fa-regular fa-calendar-check', color: 'text-indigo-400', label: '生成会议纪要', prompt: '/todo 自动提取并生成本轮对话日程会议纪要' }
+                ]
+            },
+            jira: {
+                title: "Detected: Jira Task",
+                subtitle: "JIRA INTEGRATION",
+                actions: [
+                    { id: 'jira_testcase', icon: 'fa-vials', color: 'text-emerald-400', label: '写一段测试用例', prompt: '针对当前选中的 Jira 工单生成一份完整的测试边界用例模板' },
+                    { id: 'jira_block', icon: 'fa-shield-halved', color: 'text-amber-400', label: '分析阻塞 Block 原因', prompt: '分析该 Jira 问题中阻碍的根本成因，并提供 3 个可选的恢复路径' },
+                    { id: 'jira_subtask', icon: 'fa-sitemap', color: 'text-indigo-400', label: '一键认领指派 Subtask', prompt: '/todo 认领当前任务，并在当前 Jira 工单下拆分并指派 3 个子任务表单' }
+                ]
+            },
+            email: {
+                title: "Detected: Outlook/Mail",
+                subtitle: "MAIL CO-PILOT",
+                actions: [
+                    { id: 'mail_reply', icon: 'fa-pen-fancy', color: 'text-sky-400', label: '起草专业回复', prompt: '总结并在 100 字内提炼发件人的核心意图，起草一封严谨专业的复信草稿' },
+                    { id: 'mail_todos', icon: 'fa-list-check', color: 'text-teal-400', label: '提取邮件待办与日程', prompt: '/todo 提炼并创建此邮件中涉及我本人的所有待办时限动作卡片' },
+                    { id: 'mail_thread', icon: 'fa-envelopes-bulk', color: 'text-pink-400', label: '一键总结超长邮件链', prompt: '一键汇总这封超长的多往返邮件链条，归纳三方矛盾争执点与决策线索' }
+                ]
+            },
+            vscode: {
+                title: "Detected: VS Code",
+                subtitle: "DEVELOPER INSIGHTS",
+                actions: [
+                    { id: 'code_explain', icon: 'fa-code', color: 'text-violet-400', label: '解释选定代码段', prompt: '用白话解释剪贴板内选中代码片段的核心算法实现逻辑与边界异常风险值' },
+                    { id: 'code_perf', icon: 'fa-gauge-high', color: 'text-amber-400', label: '优化当前片段性能', prompt: '审核是否有更低的时间/空间复杂度优化空间，重构输出该代码段' },
+                    { id: 'code_unittest', icon: 'fa-spell-check', color: 'text-cyan-400', label: '一键编写单元测试', prompt: '为当前剪贴板内写好的函数自动配齐完整的 Mock 单元测试覆盖率用例' }
+                ]
+            }
+        };
+
+        function renderHoverRecommendActions() {
+            const config = contextRecommendConfigs[state.activeHostContext] || contextRecommendConfigs.general;
+            
+            // 更新标题和副标题（隐藏元素，保持底层绑定不报错）
+            if (hoverCardTitle) hoverCardTitle.innerText = config.title;
+            if (hoverCardSubtitle) hoverCardSubtitle.innerText = config.subtitle;
+            
+            // 组装按钮列表（宽度自支撑，双重高亮磨砂胶囊药丸）
+            let buttonsHtml = "";
+            config.actions.forEach((act) => {
+                buttonsHtml += `
+                    <button onclick="clickRecommendAction('${act.prompt}')" class="w-auto whitespace-nowrap bg-slate-900/95 hover:bg-brand-500/25 text-slate-200 hover:text-white transition-all text-[11px] font-semibold px-3 py-2 border border-slate-800/80 hover:border-brand-500/50 rounded-full shadow-lg hover:shadow-brand-500/10 duration-200 flex items-center justify-center gap-2 group pointer-events-auto transform hover:scale-[1.03]">
+                        <i class="fa-solid ${act.icon} ${act.color} text-[10px] group-hover:scale-110 duration-150"></i>
+                        <span>${act.label}</span>
+                    </button>
+                `;
+            });
+            recommendActionsContainer.innerHTML = buttonsHtml;
+        }
+
+        // 宿主控制台更改焦点环境事件 (Step 4.1.1.1)
+        function changeHostContext(contextVal) {
+            state.activeHostContext = contextVal;
+            renderHoverRecommendActions();
+            showSandboxToast(`💻 宿主已切换焦点应用: ${contextVal.toUpperCase()}`);
+        }
+
+        function initHoverRecommendations() {
+            // 首次初始渲染
+            renderHoverRecommendActions();
+
+            trigger.addEventListener('mouseenter', () => {
+                if (state.isWidgetExpanded || state.isDragging) return;
+                
+                // 清理可能已有的离开延时时钟
+                if (state.leaveRecommendTimer) {
+                    clearTimeout(state.leaveRecommendTimer);
+                    state.leaveRecommendTimer = null;
+                }
+
+                // 1. 如果处于缩进吸附态，鼠标进来优先完全复原展示球 (Step 4.1 "Hover 时完全展示折叠态")
+                if (state.snappedLeft || state.snappedRight) {
+                    let restoreX = state.snappedLeft ? 10 : window.innerWidth - 66;
+                    gsap.to(trigger, { left: restoreX, duration: 0.2, ease: 'power2.out' });
+                    gsap.to(triggerBtn, { opacity: 1, scale: 1, duration: 0.2 });
+                }
+
+                // 2. 计时 300ms 触发推荐动作卡片 (Step 4.1.1 防抖)
+                if (!state.hoverRecommendTimer) {
+                    state.hoverRecommendTimer = setTimeout(() => {
+                        showHoverRecommendCard();
+                    }, 300);
+                }
+            });
+
+            trigger.addEventListener('mouseleave', () => {
+                // 清理可能有的进入延时时钟
+                if (state.hoverRecommendTimer) {
+                    clearTimeout(state.hoverRecommendTimer);
+                    state.hoverRecommendTimer = null;
+                }
+
+                if (state.isWidgetExpanded || state.isDragging) return;
+
+                // 计时 400ms 渐隐卡片，并重新缩回吸附隐藏 (Step 4.1.1 防走神延时)
+                state.leaveRecommendTimer = setTimeout(() => {
+                    hideHoverRecommendCard();
+                    
+                    if (state.snappedLeft || state.snappedRight) {
+                        let hiddenX = state.snappedLeft ? -32 : window.innerWidth - 24;
+                        gsap.to(trigger, { left: hiddenX, duration: 0.2, ease: 'power2.out' });
+                        gsap.to(triggerBtn, { opacity: 0.5, scale: 0.9, duration: 0.2 });
+                    }
+                }, 400);
+            });
+        }
+
+        function showHoverRecommendCard() {
+            if (state.isWidgetExpanded || state.isDragging) return;
+            
+            const rect = trigger.getBoundingClientRect();
+            const screenW = window.innerWidth;
+            const leftSided = rect.left < screenW / 2;
+
+            // Ensure the actions are fresh before display
+            renderHoverRecommendActions();
+
+            // 动态定位：根据靠屏幕哪侧，自适应 card 显示在左侧还是右侧，极简滑动渐显
+            if (leftSided) {
+                hoverCard.classList.remove('right-[70px]', 'translate-x-4', 'items-end');
+                hoverCard.classList.add('left-[70px]', '-translate-x-4', 'items-start');
+                recommendActionsContainer.classList.remove('items-end');
+                recommendActionsContainer.classList.add('items-start');
+                gsap.killTweensOf(hoverCard);
+                gsap.fromTo(hoverCard, 
+                    { opacity: 0, scale: 0.9, x: -15 },
+                    { opacity: 1, scale: 1, x: 0, duration: 0.3, ease: 'power3.out', pointerEvents: 'auto' }
+                );
+            } else {
+                hoverCard.classList.remove('left-[70px]', '-translate-x-4', 'items-start');
+                hoverCard.classList.add('right-[70px]', 'translate-x-4', 'items-end');
+                recommendActionsContainer.classList.remove('items-start');
+                recommendActionsContainer.classList.add('items-end');
+                gsap.killTweensOf(hoverCard);
+                gsap.fromTo(hoverCard, 
+                    { opacity: 0, scale: 0.9, x: 15 },
+                    { opacity: 1, scale: 1, x: 0, duration: 0.3, ease: 'power3.out', pointerEvents: 'auto' }
+                );
+            }
+        }
+
+        function hideHoverRecommendCard() {
+            gsap.killTweensOf(hoverCard);
+            gsap.to(hoverCard, { opacity: 0, scale: 0.9, duration: 0.2, pointerEvents: 'none' });
+        }
+
+        // 点击高频推荐動作卡片后的执行逻辑 (Step 4.1.1 1-Click Action)
+        function clickRecommendAction(simulatedPrompt) {
+            // 立即强制隐藏推荐卡片，防止面板被覆盖
+            hideHoverRecommendCard();
+            if (state.hoverRecommendTimer) clearTimeout(state.hoverRecommendTimer);
+            if (state.leaveRecommendTimer) clearTimeout(state.leaveRecommendTimer);
+            
+            // 唤出展开面板 (Layer 2)
+            expandWidget();
+
+            setTimeout(() => {
+                widgetInput.value = simulatedPrompt;
+                handleInputBehaviour(widgetInput);
+                submitUserMessage();
+            }, 350); // 等待面板优雅展开完毕再执行
+        }
+
+        // 展开面板定位对齐算法
+        function alignPanelPosition() {
+            const margin = 12;
+            const screenW = window.innerWidth;
+            const screenH = window.innerHeight;
+            const triggerRect = trigger.getBoundingClientRect();
+            
+            let panelLeft = 0;
+            let panelTop = triggerRect.top;
+
+            // 如果悬浮球偏左，面板应该放在悬浮球右侧
+            if (triggerRect.left < screenW / 2) {
+                panelLeft = Math.max(margin, triggerRect.left + 64 + margin);
+            } else {
+                // 面板放在悬浮球左侧
+                panelLeft = Math.min(screenW - 360 - margin, triggerRect.left - 360 - margin);
+            }
+
+            // 面板高度限制定位在屏幕内
+            const panelH = panel.offsetHeight || 580;
+            panelTop = Math.max(margin, Math.min(screenH - panelH - margin, panelTop));
+
+            // 对面板位置进行动画或瞬移
+            gsap.to(panel, {
+                left: panelLeft,
+                top: panelTop,
+                duration: 0.3,
+                ease: 'power3.out'
+            });
+        }
+
+        // ==========================================
+        // STEP 4.2: 唤起与收起
+        // ==========================================
+        function toggleWidgetView() {
+            if (state.isWidgetExpanded) {
+                collapseWidget();
+            } else {
+                expandWidget();
+            }
+        }
+
+        function expandWidget() {
+            if (state.isWidgetExpanded) return;
+            state.isWidgetExpanded = true;
+
+            // 无论悬浮球是否半隐藏，展开时显示完全态
+            if (state.snappedLeft) {
+                gsap.set(trigger, { left: 10 });
+            } else if (state.snappedRight) {
+                gsap.set(trigger, { left: window.innerWidth - 66 });
+            }
+            gsap.set(triggerBtn, { opacity: 1, scale: 1 });
+
+            // 算好面板的目标位置
+            alignPanelPosition();
+            
+            // 面板展开动画
+            panel.classList.remove('pointer-events-none');
+            gsap.fromTo(panel, 
+                { opacity: 0, scale: 0.85, transformOrigin: 'top right' },
+                { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(1.5)', onComplete: () => {
+                    // Step 4.3 唤起时：自动落焦输入框
+                    widgetInput.focus();
+                }}
+            );
+
+            // 清空折叠态临时红/呼气
+            clearL2Banner();
+        }
+
+        function collapseWidget() {
+            if (!state.isWidgetExpanded) return;
+            
+            // 是否触发不可关闭判断（D-03/D-03 条件：正在输入[有字] / 正在响应 / Escalation中）
+            if (state.isAgentResponding) {
+                showSandboxToast("⚠️ Agent 仍在处理回应中，禁止收起面板");
+                return;
+            }
+            if (widgetInput.value.trim().length > 0) {
+                showSandboxToast("⚠️ 输入框内有正在撰写的草稿，不可收起");
+                return;
+            }
+
+            state.isWidgetExpanded = false;
+            
+            // 面板收起动画
+            gsap.to(panel, {
+                opacity: 0,
+                scale: 0.9,
+                duration: 0.25,
+                ease: 'power2.in',
+                onComplete: () => {
+                    panel.classList.add('pointer-events-none');
+                    // 重新让球吸边
+                    performAutoSnapping();
+                }
+            });
+        }
+
+        // 外部点击收缩 (D-03 已确认规则与豁免条件)
+        document.addEventListener('mousedown', (e) => {
+            if (!state.isWidgetExpanded) return;
+            
+            // 豁免条件：如果点击在 Widget 身、悬浮球身，或者宿主测试面板上，绝不触发外部收起
+            if (e.target.closest('#luminaExpandedPanel') || 
+                e.target.closest('#luminaTrigger') || 
+                e.target.closest('#hostEnvironment') || 
+                e.target.closest('#sandboxToast') ||
+                e.target.closest('#mainAppSimulator')) {
+                return;
+            }
+            
+            // 如果满足不可收起规则，豁免
+            if (state.isAgentResponding || widgetInput.value.trim().length > 0) {
+                return;
+            }
+            
+            collapseWidget();
+        });
+
+        // 快捷键支持 (Step 4.2)
+        function initKeyboardShortcuts() {
+            document.addEventListener('keydown', (e) => {
+                // Ctrl + Shift + Space
+                if (e.ctrlKey && e.shiftKey && e.code === 'Space') {
+                    e.preventDefault();
+                    toggleWidgetView();
+                }
+
+                // Esc 功能 (Step 4.2: 有内容清空，无内容折叠)
+                if (e.key === 'Escape' && state.isWidgetExpanded) {
+                    if (widgetInput.value.length > 0) {
+                        widgetInput.value = "";
+                        handleInputBehaviour(widgetInput);
+                        showSandboxToast("已清空输入框草稿 (Esc)");
+                    } else {
+                        collapseWidget();
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // STEP 4.4: 输入、附件与拖拽上传
+        // ==========================================
+        function handleInputBehaviour(el) {
+            state.currentDraft = el.value;
+
+            // 1. 自适应高度 (最大120px)
+            el.style.height = 'auto';
+            el.style.height = `${Math.min(120, el.scrollHeight)}px`;
+
+            // 2. 指令触发检测 (/)
+            if (el.value.startsWith('/')) {
+                slashMenu.classList.remove('hidden');
+                gsap.to(slashMenu, { opacity: 1, y: 0, duration: 0.15 });
+            } else {
+                hideSlashMenu();
+            }
+
+            // 3. 字数计数器展示 (超过200字符警告 + 呈现软 Escalation，Step 4.4)
+            const len = el.value.length;
+            if (len > 0) {
+                charCounter.classList.remove('hidden');
+                charCounter.innerText = `${len}/200`;
+                
+                if (len > 200) {
+                    charCounter.className = "text-[9px] font-mono select-none px-1.5 py-0.5 rounded bg-brand-error/15 text-brand-error animate-pulse";
+                    showSoftEscalationHint(true);
+                } else {
+                    charCounter.className = "text-[9px] font-mono select-none px-1.5 py-0.5 rounded text-slate-500";
+                    showSoftEscalationHint(false);
+                }
+            } else {
+                charCounter.classList.add('hidden');
+                showSoftEscalationHint(false);
+            }
+        }
+
+        function hideSlashMenu() {
+            gsap.to(slashMenu, { opacity: 0, y: 8, duration: 0.15, onComplete: () => {
+                slashMenu.classList.add('hidden');
+            }});
+        }
+
+        function applySlashCommand(command) {
+            widgetInput.value = command + " ";
+            handleInputBehaviour(widgetInput);
+            widgetInput.focus();
+        }
+
+        // 附件上传拖拽支持 (Step 4.4)
+        function initDragAndDrop() {
+            const dragZone = document.getElementById('luminaExpandedPanel');
+            const overlay = document.getElementById('fileDragOverlay');
+
+            dragZone.addEventListener('dragenter', (e) => {
+                e.preventDefault();
+                overlay.classList.remove('opacity-0', 'pointer-events-none');
+            });
+
+            overlay.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+
+            overlay.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+            });
+
+            overlay.addEventListener('drop', (e) => {
+                e.preventDefault();
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+                
+                if (e.dataTransfer.files.length > 0) {
+                    const file = e.dataTransfer.files[0];
+                    handleUploadedFile(file.name, file.size);
+                }
+            });
+        }
+
+        function triggerFileSelectSimulate() {
+            const simulatedNames = ["requirements_document.docx", "avatar.png", "legacy_system_refactoring_guide.pdf", "app_store_screengrap.zip"];
+            const rName = simulatedNames[Math.floor(Math.random() * simulatedNames.length)];
+            // 随机大小，可能超过 10MB
+            const size = Math.random() > 0.6 ? 15 * 1024 * 1024 : 3 * 1024 * 1024; // 15MB or 3MB
+            handleUploadedFile(rName, size);
+        }
+
+        // 附件限制逻辑 (Step 4.4: 超过 10MB 强行 Escalation 拦截)
+        function handleUploadedFile(name, sizeInBytes) {
+            const mSize = (sizeInBytes / (1024 * 1024)).toFixed(1);
+            if (sizeInBytes > 10 * 1024 * 1024) {
+                // 超大文件拦截 → 引导 Escalation
+                addBubble('user', ` mencoba 拖拉上传附件: ${name} (${mSize}MB)`);
+                addBubble('agent-system', `
+                    <div class="flex flex-col gap-2.5">
+                        <div class="text-brand-error font-semibold flex items-center gap-1.5 text-slate-200">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            附件尺寸超限 (${mSize}MB > 10MB)
+                        </div>
+                        <div class="text-[11px] text-slate-400">大文件上传需要大量网络传输，极易产生延迟阻碍。我们建议在主应用中处理大文件。</div>
+                        <div class="h-[1px] bg-slate-800 my-1"></div>
+                        <div class="flex gap-2">
+                            <button onclick="triggerEscalation('user_initiated', 'file_upload_limit')" class="flex-1 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 rounded text-[11px] font-semibold text-white transition-all text-center">
+                                打开主应用
+                            </button>
+                        </div>
+                    </div>
+                `, true);
+            } else {
+                // 允许正常发送
+                showSandboxToast(`✅ 成功暂存附件 ${name} (${mSize}MB)`);
+                widgetInput.value += ` [已选中文件:${name}]`;
+                handleInputBehaviour(widgetInput);
+            }
+        }
+
+        // ==========================================
+        // STEP 6: AGENT 消息引擎 & 消息追加 DOM
+        // ==========================================
+        function addBubble(sender, content, isHtml = false) {
+            const flow = document.getElementById('chatMessageFlow');
+            flow.classList.remove('hidden');
+            document.getElementById('chatEmptyState').classList.add('hidden');
+
+            const bubbleItem = document.createElement('div');
+            bubbleItem.className = "flex gap-2.5 items-start animate-fade-in";
+            
+            const isUser = (sender === 'user');
+            const isSystem = (sender === 'agent-system');
+            
+            let bgClass = "bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none";
+            let alignClass = "justify-start";
+            let label = "AI";
+            let labelStyle = "bg-brand-500/20 text-brand-500";
+
+            if (isUser) {
+                bgClass = "bg-brand-500 text-white rounded-xl rounded-tr-none";
+                alignClass = "justify-end flex-row-reverse";
+                label = "ME";
+                labelStyle = "bg-white/20 text-white";
+            } else if (isSystem) {
+                bgClass = "bg-slate-950/60 border border-slate-800/60 text-slate-300 rounded-xl";
+                label = "SYS";
+                labelStyle = "bg-slate-800 text-slate-400";
+            }
+
+            bubbleItem.classList.add(...alignClass.split(' '));
+            
+            const innerHtml = `
+                <div class="w-6 h-6 rounded-full ${labelStyle} flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                    ${label}
+                </div>
+                <div class="${bgClass} p-3 text-xs max-w-[85%] leading-relaxed ${isUser ? 'selection:bg-white/20' : 'selection:bg-brand-500/20'}">
+                    ${isHtml ? content : escapeHtml(content)}
+                </div>
+            `;
+            
+            bubbleItem.innerHTML = innerHtml;
+            flow.appendChild(bubbleItem);
+            
+            // 自动滚到底部 (Step 3.3)
+            scrollToContentBottom();
+            return bubbleItem;
+        }
+
+        function scrollToContentBottom() {
+            setTimeout(() => {
+                const container = document.getElementById('panelContentContainer');
+                gsap.to(container, { scrollTop: container.scrollHeight, duration: 0.3 });
+            }, 50);
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // ==========================================
+        // SUBMIT USER MESSAGE (提交会话处理流)
+        // ==========================================
+        function submitUserMessage() {
+            const rawVal = widgetInput.value.trim();
+            if (!rawVal) return;
+            if (state.isAgentResponding) return;
+
+            // 如果处于离线状态 (Step 5.7 离线时：发送新消息被禁用)
+            if (state.isOffline) {
+                showSandboxToast("⚠️ 当前处于离线状态，发送对话已被安全置灰限制");
+                return;
+            }
+
+            hideSlashMenu();
+            addBubble('user', rawVal);
+            
+            // 清空输入框
+            widgetInput.value = "";
+            handleInputBehaviour(widgetInput);
+
+            // 如果用户输入的是快捷 P0，则统计 5.2 隐藏规则
+            if (rawVal.includes('QuickP0:')) {
+                state.useP0SuggestionCount++;
+            }
+
+            // 触发 Agent 处理流程 (Step 5.3)
+            triggerAgentProcessing(rawVal);
+        }
+
+        // 快捷用例填入
+        function useQuickP0(text) {
+            widgetInput.value = `[QuickP0: P0快速通道] ${text}`;
+            handleInputBehaviour(widgetInput);
+            submitUserMessage();
+        }
+
+        // ==========================================
+        // STEP 5.3: AGENT RESPONSE FLOW (流式与延时响应)
+        // ==========================================
+        function triggerAgentProcessing(userText) {
+            state.isAgentResponding = true;
+            toggleAgentUiState(true);
+
+            // 1. 创建流式消息占位符
+            const flow = document.getElementById('chatMessageFlow');
+            const bubbleItem = document.createElement('div');
+            bubbleItem.className = "flex gap-2.5 items-start justify-start";
+            bubbleItem.innerHTML = `
+                <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                    AI
+                </div>
+                <div id="streamingBubbleBody" class="bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none p-3 text-xs text-slate-200 max-w-[85%] leading-relaxed flex flex-col gap-2">
+                    <div id="streamingLoadingArea" class="flex items-center gap-1.5 py-1">
+                        <span class="typing-dot w-2 h-2 rounded-full bg-brand-500"></span>
+                        <span class="typing-dot w-2 h-2 rounded-full bg-brand-500"></span>
+                        <span class="typing-dot w-2 h-2 rounded-full bg-brand-500"></span>
+                        <span id="streamingStatusLabel" class="text-[10px] text-slate-500 ml-1.5">准备分析中...</span>
+                    </div>
+                    <div id="streamingTextArea" class="hidden"></div>
+                    <div id="streamingActionArea" class="hidden h-[1px] bg-slate-800/60 my-1"></div>
+                    <button id="btnStopStreaming" onclick="abortAgentResponse()" class="w-fit hover:bg-red-500/10 hover:text-red-400 border border-red-500/20 rounded px-2 py-1 text-[10px] text-slate-400 font-medium flex items-center gap-1">
+                        <i class="fa-regular fa-circle-stop"></i>
+                        停止响应
+                    </button>
+                </div>
+            `;
+            flow.appendChild(bubbleItem);
+            scrollToContentBottom();
+
+            // 超时时钟模拟 (Step 5.6: 1s -> 3s -> 10s)
+            let stageSeconds = 0;
+            const statusLabel = bubbleItem.querySelector('#streamingStatusLabel');
+            
+            const timer = setInterval(() => {
+                stageSeconds++;
+                if (stageSeconds === 1) {
+                    statusLabel.innerText = "正在拆解语义意图...";
+                } else if (stageSeconds === 3) {
+                    statusLabel.innerText = "正在拼合轻量执行管线 (仍在处理中)...";
+                } else if (stageSeconds === 9) {
+                    statusLabel.innerText = "后端决策有些延迟 (超时重试中)...";
+                } else if (stageSeconds >= 15) {
+                    // 超时自动 Level 2 异常 (Step 5.6)
+                    clearInterval(timer);
+                    renderAgentResponseTimeout(bubbleItem);
+                }
+            }, 1000);
+
+            // 存储全局变量便于中断
+            state.currentStreamingTimer = timer;
+
+            // 模拟 4.5s 延迟后，完美吐字 (首字响应，阶段 2 开始)
+            setTimeout(() => {
+                if (!state.isAgentResponding || state.currentStreamingTimer !== timer) return;
+                clearInterval(timer);
+                
+                // 识别意图并路由回复 (Step 6)
+                routeAgentIntentResponse(userText, bubbleItem);
+            }, 3000);
+        }
+
+        // 终止或者中断 Agent 流式输出 (Step 5.3)
+        function abortAgentResponse() {
+            if (!state.isAgentResponding) return;
+            if (state.currentStreamingTimer) clearInterval(state.currentStreamingTimer);
+            
+            state.isAgentResponding = false;
+            toggleAgentUiState(false);
+
+            const stopBtn = document.getElementById('btnStopStreaming');
+            if (stopBtn) stopBtn.outerHTML = `<span class="text-[9px] text-slate-500 font-semibold uppercase italic tracking-wider"><i class="fa-solid fa-circle-stop mr-1"></i> 已主动中止</span>`;
+
+            const area = document.getElementById('streamingTextArea');
+            if (area) {
+                area.innerHTML += `<p class="text-slate-500 text-[10px] mt-1 italic leading-normal border-t border-slate-800/40 pt-1 flex items-center gap-1"><i class="fa-solid fa-user-slash"></i> 前 20% 流式数据由于离场已被记录并清空。</p>`;
+            }
+            showSandboxToast("已手动打断 AI 响应数据传输");
+        }
+
+        // 超时降级 Level 2 状态
+        function renderAgentResponseTimeout(bubbleNode) {
+            state.isAgentResponding = false;
+            toggleAgentUiState(false);
+            
+            bubbleNode.querySelector('#streamingBubbleBody').innerHTML = `
+                <div class="flex flex-col gap-2">
+                    <span class="text-brand-error font-semibold flex items-center gap-1.5 text-slate-200">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        会话请求超时 (API Timeout)
+                    </span>
+                    <span class="text-[11px] text-slate-400">服务器响应极慢或连接意外中断，符合第 Level 2 会话级拦截。您的输入已经存储。</span>
+                    <div class="flex gap-2 mt-1">
+                        <button onclick="mockAgentScenario('short')" class="flex-1 px-3 py-1 bg-slate-800 hover:bg-slate-700/60 border border-slate-700 rounded text-[11px] font-semibold text-slate-200">
+                            重新提交
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleAgentUiState(active) {
+            const hDot = document.getElementById('headerStatusDot');
+            const hDotPulse = document.getElementById('headerStatusDotPulse');
+            const sendBtn = document.getElementById('btnSendMessage');
+            
+            if (active) {
+                // 折叠态也相应闪烁
+                triggerStatusRing.classList.remove('hidden');
+                gsap.to(triggerStatusRing, { opacity: 1, scale: 1.15, duration: 0.3 });
+                hDot.className = "relative inline-flex rounded-full h-2 w-2 bg-brand-active";
+                hDotPulse.className = "absolute inline-flex h-full w-full rounded-full bg-brand-active opacity-75 animate-ping";
+                
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-xs"></i>`;
+                widgetInput.placeholder = "Agent 响应处理中，请稍后...";
+                widgetInput.disabled = true;
+            } else {
+                triggerStatusRing.classList.add('hidden');
+                gsap.set(triggerStatusRing, { opacity: 0 });
+                
+                hDot.className = state.isOffline 
+                    ? "relative inline-flex rounded-full h-2 w-2 bg-brand-error" 
+                    : "relative inline-flex rounded-full h-2 w-2 bg-brand-500";
+                
+                hDotPulse.className = state.isOffline 
+                    ? "absolute inline-flex h-full w-full rounded-full bg-brand-error opacity-75 animate-ping" 
+                    : "absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75 animate-ping";
+
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = `<i class="fa-solid fa-paper-plane text-xs"></i>`;
+                widgetInput.placeholder = "有什么需要帮忙的？(拼写 / 唤出菜单)";
+                widgetInput.disabled = false;
+            }
+        }
+
+        // ==========================================
+        // ROUTE INTENT RESPONSE (智能路由响应输出)
+        // ==========================================
+        function routeAgentIntentResponse(text, bubbleItem) {
+            const loading = bubbleItem.querySelector('#streamingLoadingArea');
+            const textArea = bubbleItem.querySelector('#streamingTextArea');
+            
+            loading.classList.add('hidden');
+            textArea.classList.remove('hidden');
+
+            // 提取是否有测试指令
+            let contentStr = "";
+            let triggerScenario = 'short';
+
+            if (text.includes('150字快答') || text.includes('short')) {
+                triggerScenario = 'short';
+            } else if (text.includes('500字长答') || text.includes('long') || text.length > 200) {
+                triggerScenario = 'long';
+            } else if (text.includes('选择澄清') || text.includes('clarify')) {
+                triggerScenario = 'clarify';
+            } else if (text.includes('不可逆') || text.includes('destructive') || text.includes('E类')) {
+                triggerScenario = 'destructive';
+            } else if (text.includes('/todo')) {
+                triggerScenario = 'todo';
+            }
+
+            // 执行流式或者直接塞卡片
+            if (triggerScenario === 'short') {
+                contentStr = "通过了内部轻型判定！这是一个在 Widget 内部可以直接完成的信息答复用例。我们成功将其精简至 150 字以内，不仅没有引起您的任何体验打断，更无需进行页面跳转！";
+                streamTextOutput(textArea, contentStr, () => {
+                    bubbleItem.querySelector('#btnStopStreaming').outerHTML = `
+                        <div class="text-[9px] text-slate-500 font-mono flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                            本轮回答已无损完成
+                        </div>
+                    `;
+                    state.isAgentResponding = false;
+                    toggleAgentUiState(false);
+                });
+            } else if (triggerScenario === 'long') {
+                contentStr = "这属于 **C类 超出边界任务**。我们评估当前的输出篇幅将远超 500 字限值，并在小屏幕中严重降低长文本编辑效率。根据推荐的软限制，强烈建议将本会话挂载升级至主应用进行。";
+                streamTextOutput(textArea, contentStr, () => {
+                    bubbleItem.querySelector('#btnStopStreaming').outerHTML = "";
+                    bubbleItem.querySelector('#streamingActionArea').outerHTML = `
+                        <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-800/60">
+                            <div class="text-brand-warning font-semibold text-[11px] flex items-center gap-1">
+                                <i class="fa-solid fa-circle-question"></i>
+                                触发软限制 Escalation
+                            </div>
+                            <div class="text-[10px] text-slate-400 leading-normal">说明：在 Widget 外的大屏幕中可直接进行精准文档格式拼装。</div>
+                            <div class="flex gap-2">
+                                <button onclick="triggerEscalation('agent_suggested', 'character_limit_exceeded')" class="flex-1 text-center bg-brand-500 hover:bg-brand-600 transition-all font-semibold rounded px-2.5 py-1 text-[10px] text-white">
+                                    打开主应用并同步
+                                </button>
+                                <button onclick="declineEscalation(this)" class="px-2.5 py-1 hover:bg-slate-850 rounded text-[10px] font-semibold text-slate-400 hover:text-slate-200 border border-slate-800">
+                                    继续在这里
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    state.isAgentResponding = false;
+                    toggleAgentUiState(false);
+                });
+            } else if (triggerScenario === 'clarify') {
+                // 5.2 模糊意图
+                contentStr = "已捕获提醒轻指令，但此操作属于 **D类 模糊意图**。为了能精准创建提醒，必须先明确您希望提醒的内容类型：";
+                streamTextOutput(textArea, contentStr, () => {
+                    bubbleItem.querySelector('#btnStopStreaming').outerHTML = "";
+                    bubbleItem.querySelector('#streamingActionArea').outerHTML = `
+                        <div class="flex flex-col gap-1.5 mt-2 pt-2 border-t border-slate-800/60 select-none">
+                            <button onclick="handleClarifySelection('代办消息')" class="w-full text-[10px] justify-between text-left hover:bg-brand-500/10 text-slate-300 font-semibold px-2.5 py-1.5 rounded bg-slate-950/40 border border-slate-800/80 flex items-center group">
+                                <span>[选项一] 提醒我完成一些事务性工作 </span>
+                                <i class="fa-solid fa-check text-[8px] text-brand-active opacity-0 group-hover:opacity-100"></i>
+                            </button>
+                            <button onclick="handleClarifySelection('系统会议')" class="w-full text-[10px] justify-between text-left hover:bg-brand-500/10 text-slate-300 font-semibold px-2.5 py-1.5 rounded bg-slate-950/40 border border-slate-800/80 flex items-center group">
+                                <span>[选项二] 启动一个会议日程提醒 </span>
+                                <i class="fa-solid fa-check text-[8px] text-brand-active opacity-0 group-hover:opacity-100"></i>
+                            </button>
+                        </div>
+                    `;
+                    state.isAgentResponding = false;
+                    toggleAgentUiState(false);
+                });
+            } else if (triggerScenario === 'destructive') {
+                contentStr = "已检测到您请求的是撤销或删除系统生产级流水线的动作。根据系统 **E类 不可逆操作拦截规范**，您需要获得最高级别的安全验证并提供多人员确认。";
+                streamTextOutput(textArea, contentStr, () => {
+                    bubbleItem.querySelector('#btnStopStreaming').outerHTML = "";
+                    bubbleItem.querySelector('#streamingActionArea').outerHTML = `
+                        <div class="flex flex-col gap-2 mt-2 pt-2 border-t border-slate-800/60">
+                            <div class="text-brand-error font-semibold text-[11px] flex items-center gap-1">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                触发硬限制阻断 (Step 6.5.3)
+                            </div>
+                            <div class="text-[10px] text-slate-400">此动作属于高危、不可逆的最高安全级拦截域。仅开放主应用执行通道。</div>
+                            <div class="flex gap-2">
+                                <button onclick="triggerEscalation('hard_limit', 'destructive_action')" class="flex-1 text-center bg-brand-500 hover:bg-brand-600 transition-all font-semibold rounded px-2.5 py-1.5 text-[10px] text-white">
+                                    必须在主应用中进行
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    state.isAgentResponding = false;
+                    toggleAgentUiState(false);
+                });
+            } else if (triggerScenario === 'todo') {
+                contentStr = "正在构建任务轻表单卡片... 我们仅为您精简保留了两个必填项，不包含任何多余字段 (Step 3.3 任务卡片模式)。";
+                streamTextOutput(textArea, contentStr, () => {
+                    bubbleItem.querySelector('#btnStopStreaming').outerHTML = "";
+                    bubbleItem.querySelector('#streamingActionArea').outerHTML = `
+                        <div class="flex flex-col gap-2.5 mt-2 pt-2 border-t border-slate-800/60 select-text pointer-events-auto">
+                            <div class="bg-slate-950/60 p-3 rounded border border-slate-800 flex flex-col gap-3">
+                                <div class="text-[9px] text-slate-500 font-mono font-bold uppercase tracking-wider">🗒️ 新建轻待办卡片 (MODE B)</div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[9px] text-slate-400">待办名称:</label>
+                                    <input id="todoFormTitle" type="text" class="bg-slate-900 border border-slate-800 rounded p-1.5 text-[11px] text-slate-200 py-1 focus:outline-none focus:border-brand-500/50" value="重构 legacy 的 WebSocket 连接重试">
+                                </div>
+                                <div class="flex flex-col gap-1">
+                                    <label class="text-[9px] text-slate-400">指定截止时间:</label>
+                                    <select id="todoFormTime" class="bg-slate-900 border border-slate-800 rounded p-1 text-[11px] text-slate-300 py-1 focus:outline-none">
+                                        <option>今天下班前 (6:00 PM)</option>
+                                        <option>明早晨会前 (9:30 AM)</option>
+                                    </select>
+                                </div>
+                                <button onclick="submitTodoFormSimulate(this)" class="w-full bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded text-center text-[10px] py-1.5 transition-all">
+                                    提交至后台处理
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    state.isAgentResponding = false;
+                    toggleAgentUiState(false);
+                });
+            }
+        }
+
+        // 字符逐字吐出效果 (ChatGPT 拟真)
+        function streamTextOutput(container, fullText, callback) {
+            let index = 0;
+            const step = 2; // 一次吐2个字加快演示
+            
+            const timer = setInterval(() => {
+                index += step;
+                container.innerHTML = formatMarkdownSimulate(fullText.substring(0, index));
+                scrollToContentBottom();
+                
+                if (index >= fullText.length) {
+                    clearInterval(timer);
+                    if (callback) callback();
+                }
+            }, 25);
+            
+            state.currentStreamingTimer = timer;
+        }
+
+        function formatMarkdownSimulate(txt) {
+            // 简单转粗体和列表
+            return txt
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-slate-100 font-bold">$1</strong>')
+                .replace(/-\s(.*?)(\n|$)/g, '<li class="list-disc ml-4 text-slate-300 my-0.5">$1</li>');
+        }
+
+        // ==========================================
+        // SUB_USECASES (小型模拟辅助动作)
+        // ==========================================
+        function handleClarifySelection(choice) {
+            addBubble('user', `我确认: ${choice}`);
+            hideClarifyControls();
+            
+            // 触发响应
+            state.isAgentResponding = true;
+            toggleAgentUiState(true);
+            setTimeout(() => {
+                state.isAgentResponding = false;
+                toggleAgentUiState(false);
+                addBubble('agent', `好的！接收到该澄清指令选择「${choice}」。由于该轻提醒任务在 3 步内，我已成功为您在 Widget 内部执行完毕。`);
+            }, 1000);
+        }
+
+        function hideClarifyControls() {
+            // 自动移除该澄清选项
+            showSandboxToast("完成选项澄清");
+        }
+
+        function submitTodoFormSimulate(btnNode) {
+            const containerCard = btnNode.closest('.bg-slate-950/60');
+            const title = containerCard.querySelector('#todoFormTitle').value;
+            
+            containerCard.innerHTML = `
+                <div class="text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check"></i>
+                    待办轻表单已成功提交！
+                </div>
+                <div class="text-[10px] text-slate-500 mt-1">
+                    待办事项【${title}】已提交且保存数据库。自动收缩保护中...
+                </div>
+            `;
+            
+            // UX 规范：4.2 收起方式「任务完成 3 秒延迟后自动收缩折叠态，减少干扰」
+            showSandboxToast("轻任务提交完毕，3 秒后自动闭合折叠态 (Step 4.2)");
+            setTimeout(() => {
+                collapseWidget();
+            }, 3000);
+        }
+
+        // ==========================================
+        // STEP 7: NOTIFICATION DESIGNS (三级通知分级流)
+        // ==========================================
+        function triggerNotification(level) {
+            // D-02 30秒强提醒冷却拦截检测 (仅在正常模式 L3 生效)
+            if (level === 'L3') {
+                const now = Date.now();
+                const diff = (now - state.lastL3NotificationTime) / 1000;
+                
+                if (state.isFocused) {
+                    // Step 7.4 专注模式：所有 L3 强打断强制降维滑出轻提示 (L3 -> L2)
+                    showSandboxToast("🌙 处于专注模式中：L3打断静默降降为 L2 提示，不破坏专注");
+                    pushL2Notification("紧急告警！系统捕获到一个 CPU 利用率峰值，但被您已开启的专注盾临时降低干扰阈值。");
+                    return;
+                }
+                
+                if (diff < 30) {
+                    showSandboxToast(`⏳ 强提醒 30s 冷却拦截器生效：L3 强行降级为 L2 提示 (上次相隔 ${diff.toFixed(1)} 秒)`);
+                    pushL2Notification("由于频繁的更新告警，本轮审批被暂存，仅通知其摘要内容更新。");
+                    return;
+                }
+                
+                state.lastL3NotificationTime = now;
+                pushL3Notification("紧急：API_GATEWAY 流失了 12 条重要业务审批请求，请您立即决断审批策略！");
+            } else if (level === 'L2') {
+                pushL2Notification("流水线后端打包任务 [构建#528] 已于刚才顺利通过自动化测试容器校验！");
+            } else {
+                pushL1Notification();
+            }
+        }
+
+        // L1 静默角标 (Step 7.2 L1)
+        function pushL1Notification() {
+            state.unreadCount++;
+            triggerBadge.classList.remove('hidden');
+            triggerBadge.innerText = state.unreadCount > 99 ? "99+" : state.unreadCount;
+            
+            showSandboxToast(`🔔 L1静默通知到达。角标数字更新：+1 (当前未读 ${state.unreadCount})`);
+            
+            // 如果面板是展开着的，消息列表更新
+            if (state.isWidgetExpanded) {
+                // 仅更新无提示
+            }
+        }
+
+        // L2 轻提示摘要横幅滑出 (Step 7.2 L2: 露出 4 秒后收起)
+        function pushL2Notification(message) {
+            state.unreadCount++;
+            triggerBadge.classList.remove('hidden');
+            triggerBadge.innerText = state.unreadCount > 99 ? "99+" : state.unreadCount;
+
+            lightBannerText.innerText = message;
+            
+            gsap.killTweensOf(lightBanner);
+            gsap.fromTo(lightBanner, 
+                { opacity: 0, scale: 0.9, x: 20 },
+                { opacity: 1, scale: 1, x: 0, duration: 0.3, ease: 'power3.out' }
+            );
+
+            // 停留 4 秒后自动滑走收纳 (Step 7.2 L2)
+            setTimeout(() => {
+                clearL2Banner();
+            }, 4000);
+        }
+
+        function clearL2Banner() {
+            gsap.to(lightBanner, { opacity: 0, scale: 0.9, x: 10, duration: 0.25 });
+        }
+
+        // L3 强极度提醒卡片：自动唤展开态，将通知排在首层 (Step 7.2 L3)
+        function pushL3Notification(title) {
+            // 自动伸展
+            expandWidget();
+
+            // 在 MessageFlow 中，置顶或追加一个强通知形式的卡片 (Mode C, Step 3.3)
+            const flow = document.getElementById('chatMessageFlow');
+            flow.classList.remove('hidden');
+            document.getElementById('chatEmptyState').classList.add('hidden');
+
+            const card = document.createElement('div');
+            card.className = "p-3 bg-red-500/10 border-2 border-red-500/40 rounded-lg text-xs tracking-wide flex flex-col gap-2.5 animate-bounce-short mb-2 select-text pointer-events-auto";
+            card.innerHTML = `
+                <div class="flex items-center justify-between text-brand-error font-bold font-mono">
+                    <span>⚠️ L3 高优先级警告打断</span>
+                    <span class="text-[9px] bg-red-500/20 px-1.5 py-0.5 rounded">MUST DECIDE</span>
+                </div>
+                <div class="font-bold text-slate-100 text-[11px]">${title}</div>
+                <div class="text-[10px] text-slate-400">属于 P0 安全卡点事项：API 接入异常降维。您可以选择直接在此一键允许放行，或移交至大屏管理上下文。</div>
+                <div class="h-[1px] bg-red-500/20"></div>
+                <div class="flex gap-2">
+                    <button onclick="handleL3Decision('approve', this)" class="flex-1 bg-red-500/80 hover:bg-red-500 text-white font-semibold rounded text-center py-1 text-[10px] transition-all">
+                        确定：一键全部审批放行
+                    </button>
+                    <button onclick="triggerEscalation('agent_suggested', 'l3_heavy_decision')" class="px-2.5 py-1 hover:bg-slate-800 border border-slate-700 font-semibold rounded text-slate-300 text-[10px] transition-all">
+                        移交主应用
+                    </button>
+                    <button onclick="handleL3Decision('ignore', this)" class="text-slate-500 hover:text-slate-300 text-[10px] flex items-center justify-center font-semibold scale-90 px-1">
+                        忽略
+                    </button>
+                </div>
+            `;
+            
+            // 插入至最前面
+            flow.insertBefore(card, flow.firstChild);
+            scrollToContentBottom();
+            showSandboxToast("🔥 L3强响应状态触发！Widget 强制启动展开，呈现决策核心卡片");
+        }
+
+        function handleL3Decision(intent, btnNode) {
+            const card = btnNode.closest('.p-3');
+            if (intent === 'approve') {
+                card.innerHTML = `
+                    <div class="text-emerald-400 font-semibold text-[11px] flex items-center gap-1">
+                        <i class="fa-solid fa-circle-check"></i>
+                        P0 会话预设审批已通过，数据成功传输！
+                    </div>
+                `;
+                showSandboxToast("已放行此拦截决策");
+            } else if (intent === 'ignore') {
+                gsap.to(card, { opacity: 0, height: 0, y: -10, p: 0, duration: 0.3, onComplete: () => {
+                    card.remove();
+                }});
+                showSandboxToast("该 L3 打断通知已被安全忽略收纳 (100% 标记已读)");
+            }
+        }
+
+        // ==========================================
+        // SYSTEM CONTROLS (专注模式/离线/错误注入等)
+        // ==========================================
+        function toggleSystemFocus() {
+            state.isFocused = !state.isFocused;
+            const btn = document.getElementById('btnFocusMode');
+            
+            if (state.isFocused) {
+                hostFocusIndicator.classList.remove('hidden');
+                btn.className = "flex-1 bg-brand-warning/20 border border-brand-warning/40 px-3 py-2 rounded text-xs font-semibold text-brand-warning flex items-center justify-center gap-2";
+                btn.innerHTML = `<i class="fa-solid fa-moon animate-pulse"></i> 挂载：系统专注模式中`;
+                showSandboxToast("🌙 处于系统专注过滤模式中：所有强 L3 提醒自动降低干扰级别");
+                
+                // Widget 头部同步转换
+                document.getElementById('panelHeaderFocusBtn').innerHTML = `<i class="fa-solid fa-moon text-brand-warning text-xs"></i>`;
+            } else {
+                hostFocusIndicator.classList.add('hidden');
+                btn.className = "flex-1 hover:bg-indigo-600/20 hover:border-indigo-500/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2";
+                btn.innerHTML = `<i class="fa-regular fa-moon"></i> 开启系统专注模式 (Focus Mode)`;
+                showSandboxToast("🌙 已经退出专注模式，通知机制恢复常规阈值级别");
+                
+                document.getElementById('panelHeaderFocusBtn').innerHTML = `<i class="fa-regular fa-moon text-xs"></i>`;
+            }
+        }
+
+        function toggleWidgetFocus() {
+            // Widget 内部按钮也有联动 (D-01 决策：任意为真即进入)
+            toggleSystemFocus();
+        }
+
+        function toggleNetwork() {
+            state.isOffline = !state.isOffline;
+            const btn = document.getElementById('btnNetworkMode');
+            const offlineBadge = document.getElementById('headerBadgeOffline');
+            
+            if (state.isOffline) {
+                hostNetworkIndicator.className = "flex items-center gap-1.5 px-2.5 py-1 rounded bg-brand-error/10 border border-brand-error/20 text-brand-error text-xs font-mono";
+                hostNetworkIndicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-brand-error"></span> OFFLINE`;
+                btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> 重新恢复在线状态`;
+                btn.className = "flex-1 bg-brand-error/20 border border-brand-error/40 px-3 py-2 rounded text-xs font-semibold text-brand-error flex items-center justify-center gap-2";
+                
+                offlineBadge.classList.remove('hidden');
+                widgetInput.placeholder = "⚠️ 网络已断开，发送已被安全降级锁定";
+                
+                showSandboxToast("🚨 网络连接已切断 (Offline Mode)。新会话已被置灰锁定");
+            } else {
+                hostNetworkIndicator.className = "flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono";
+                hostNetworkIndicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE`;
+                btn.innerHTML = `<i class="fa-solid fa-wifi"></i> 模拟断网 (Offline)`;
+                btn.className = "flex-1 hover:bg-brand-error/20 hover:border-brand-error/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2";
+                
+                offlineBadge.classList.add('hidden');
+                widgetInput.placeholder = "有什么需要帮忙的？(拼写 / 唤出菜单)";
+                
+                showSandboxToast("📶 网络已恢复正常，重新初始化 WebSocket 通道架构 (Step 8)");
+            }
+            toggleAgentUiState(false);
+        }
+
+        // ==========================================
+        // SCENARIO SHORTCUTS (控制面板场景模拟绑定)
+        // ==========================================
+        function mockAgentScenario(type) {
+            // 打开面板
+            expandWidget();
+            
+            let simulatedInput = "";
+            if (type === 'short') {
+                simulatedInput = "帮我生成一个轻型的 150 字快速答复意图模型评估";
+            } else if (type === 'long') {
+                simulatedInput = "帮我起草一份关于如何将遗留 C++ 转换至 Go 的深度技术报告方案。需要有 5 个不同的方案模块对比。";
+            } else if (type === 'clarify') {
+                simulatedInput = "帮我创建一个提醒卡片，但先空着内容和类型";
+            } else if (type === 'destructive') {
+                simulatedInput = "清空并彻底格式化所有正在执行的后台产品线数据库实例";
+            } else if (type === 'background') {
+                // 后台执行，并且触发折叠态 (Step 6.7)
+                showSandboxToast("⚙️ 后台任务触发！Widget 故意收起，模拟 8 秒后后台跑完产生角标。");
+                collapseWidget();
+                
+                // 执行环运行
+                triggerStatusRing.classList.remove('hidden');
+                gsap.to(triggerStatusRing, { opacity: 1, scale: 1.15, duration: 0.3 });
+                
+                // 模拟 7s 后任务完成，弹出轻提示
+                setTimeout(() => {
+                    triggerStatusRing.classList.add('hidden');
+                    gsap.set(triggerStatusRing, { opacity: 0 });
+                    
+                    pushL2Notification("🚀 [后台批处理完成] 全局 Legacy Web 静态代码压缩已全部无错执行完毕！");
+                }, 7000);
+                return;
+            }
+
+            // 填字并提交
+            widgetInput.value = simulatedInput;
+            handleInputBehaviour(widgetInput);
+            submitUserMessage();
+        }
+
+        // 字符计数触发软 Escalation (Step 4.4 / 6.3)
+        let _softEscalationAdded = false;
+        
+        function showSoftEscalationHint(show) {
+            const flow = document.getElementById('chatMessageFlow');
+            const alertCardId = 'softEscalationInputWarning';
+            let alertCard = document.getElementById(alertCardId);
+
+            if (show) {
+                if (!alertCard) {
+                    alertCard = document.createElement('div');
+                    alertCard.id = alertCardId;
+                    alertCard.className = "p-3 bg-brand-warning/10 border border-brand-warning/40 rounded-lg text-[10.5px] text-slate-300 leading-normal flex flex-col gap-2 animate-fade-in pointer-events-auto select-text mb-2";
+                    alertCard.innerHTML = `
+                        <div class="text-brand-warning font-semibold flex items-center gap-1">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            篇幅软限制警告：输入超过 200 字
+                        </div>
+                        <div>在 Widget 宽仅为 360px 的窗口高频编辑长文档极度消耗精力。我们建议一键同步移交至大屏主应用。</div>
+                        <div class="flex gap-1.5 mt-1">
+                            <button onclick="triggerEscalation('user_initiated', 'input_length_warning')" class="flex-1 bg-brand-warning text-black font-bold h-6 rounded text-[10px] text-center">
+                                打开主应用
+                            </button>
+                        </div>
+                    `;
+                    flow.classList.remove('hidden');
+                    document.getElementById('chatEmptyState').classList.add('hidden');
+                    flow.appendChild(alertCard);
+                    scrollToContentBottom();
+                }
+            } else {
+                if (alertCard) {
+                    alertCard.remove();
+                }
+            }
+        }
+
+        // 用户按了拒绝升级按钮，仅做个关闭并忽略
+        function declineEscalation(btnNode) {
+            const card = btnNode.closest('.flex-col');
+            card.innerHTML = `
+                <div class="text-slate-400 text-[10px] italic py-1"><i class="fa-solid fa-reply mr-1"></i> 您选择了继续在 Widget 中查看...</div>
+            `;
+            showSandboxToast("已经降维继续保留在 Widget 中执行 (P0限100字精简内容输出)");
+        }
+
+        // ==========================================
+        // STEP 5.5: LEVEL 3 WIDGET ERROR (崩溃注入态)
+        // ==========================================
+        function triggerSystemError(level) {
+            showSandboxToast("🚨 系统崩溃异常注入成功。符合第 Level 3 极高崩溃灾难！");
+            
+            // 折叠态报错红
+            triggerBtn.className = "w-14 h-14 rounded-full bg-gradient-to-tr from-rose-600 to-red-500 shadow-glow flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-200 border border-red-500 relative group";
+            triggerLogo.className = "w-7 h-7 text-white drop-shadow-md transition-all duration-300 text-rose-100";
+            
+            expandWidget();
+
+            // 面板展示严重的 Level 3 崩溃，全面板不可用 (Step 5.5 Level 3)
+            const flow = document.getElementById('chatMessageFlow');
+            flow.classList.remove('hidden');
+            document.getElementById('chatEmptyState').classList.add('hidden');
+            
+            // 抹杀掉历史渲染
+            flow.innerHTML = `
+                <div class="bg-rose-500/10 border-2 border-rose-500/30 p-4 rounded-xl flex flex-col gap-3 my-auto pointer-events-auto">
+                    <div class="text-brand-error font-extrabold text-xs font-mono flex items-center gap-1.5 uppercase">
+                        <i class="fa-solid fa-triangle-exclamation animate-bounce"></i>
+                        System_Failure: Level 3 Critical Crashed
+                    </div>
+                    <div class="text-[11px] text-slate-400 leading-normal">
+                        警告：Lumina Widget 的底层 WebSocket 网关握手出现灾难性通信校验失效。我们无法在 Widget 容器中维持轻巧的控制。
+                    </div>
+                    <div class="p-2 bg-slate-950 font-mono text-[9px] text-rose-400 border border-slate-850 rounded">
+                        Error_Code: WS_GATEWAY_AUTH_FAILURE_502<br/>
+                        Instance_ID: lumina-node-x7
+                    </div>
+                    <div class="h-[1px] bg-slate-800"></div>
+                    <div class="flex gap-2">
+                        <button onclick="resetSystemState()" class="flex-1 shrink-0 bg-rose-600 hover:bg-rose-500 text-white font-semibold text-center rounded py-1.5 text-[10px] transition-all">
+                            立即尝试重拨 WebSocket
+                        </button>
+                        <button onclick="triggerEscalation('hard_limit', 'system_crash_recovery')" class="flex-1 bg-slate-800 border border-slate-700 hover:bg-slate-750 font-semibold rounded text-slate-300 text-[10px]">
+                            转至主应用求助
+                        </button>
+                    </div>
+                </div>
+            `;
+            scrollToContentBottom();
+        }
+
+        // ==========================================
+        // STEP 6.5: ESCALATION ENGINE (主应用移交实现)
+        // ==========================================
+        function triggerEscalation(triggerType, reason) {
+            // 1. 构建传递的数据包 (Step 3.4 Package Pack)
+            const payload = {
+                "session_id": `LUMINA-SESS-WID-${Math.floor(Math.random() * 100000)}`,
+                "draft": state.currentDraft || document.getElementById('widgetInputArea').value,
+                "intent": "escalation",
+                "trigger": triggerType,
+                "context": {
+                    "last_messages": [
+                        "Hello, I am Lumina Bot.",
+                        state.currentDraft ? `User draft contents: "${state.currentDraft}"` : "User initiated deep analysis",
+                        `Action trigger parameter: "${reason}"`
+                    ],
+                    "active_task": "Safety / Format Overflow / Manual Alignment"
+                }
+            };
+
+            // 2. 显示主应用接收
+            document.getElementById('lblSessionId').innerText = payload.session_id;
+            document.getElementById('jsonPayloadField').innerText = JSON.stringify(payload, null, 2);
+            document.getElementById('mainAppDraftArea').value = payload.draft || "无草稿暂存";
+
+            // 3. 闭合 Widget 的展开面板 (Step 3.4: "Escalation: Widget 自动收起至折叠态")
+            state.isWidgetExpanded = false;
+            gsap.to(panel, { opacity: 0, scale: 0.9, duration: 0.25, ease: 'power2.in', onComplete: () => {
+                panel.classList.add('pointer-events-none');
+                performAutoSnapping();
+            }});
+
+            // 4. 打开主应用的遮罩层
+            const mainApp = document.getElementById('mainAppSimulator');
+            mainApp.classList.remove('pointer-events-none');
+            gsap.fromTo(mainApp, 
+                { opacity: 0 },
+                { opacity: 1, duration: 0.4, ease: 'power2.out' }
+            );
+            gsap.fromTo(mainApp.querySelector('.max-w-4xl'),
+                { scale: 0.9, y: 15 },
+                { scale: 1, y: 0, duration: 0.4, ease: 'power3.out' }
+            );
+
+            showSandboxToast("📦 Context Synced: 数据会话已成功且无损地升维移交至大屏主应用进行！");
+        }
+
+        function closeMainAppSimulator() {
+            const mainApp = document.getElementById('mainAppSimulator');
+            gsap.to(mainApp, { opacity: 0, duration: 0.35, onComplete: () => {
+                mainApp.classList.add('pointer-events-none');
+            }});
+            gsap.to(mainApp.querySelector('.max-w-4xl'), { scale: 0.9, y: 15, duration: 0.35 });
+            
+            showSandboxToast("已成功返回 Widget 轻量协同窗口层 (Layer 1)");
+        }
+
+        // ==========================================
+        // SANBOX MANAGEMENT (重置与通知提示)
+        // ==========================================
+        function resetSystemState() {
+            if (state.currentStreamingTimer) clearInterval(state.currentStreamingTimer);
+            
+            state.isWidgetExpanded = false;
+            state.widgetCurrentPosition = { x: window.innerWidth - 80, y: window.innerHeight / 2 - 28 };
+            state.unreadCount = 0;
+            state.isFocused = false;
+            state.isOffline = false;
+            state.lastL3NotificationTime = 0;
+            state.isAgentResponding = false;
+            state.currentDraft = "";
+
+            panel.classList.add('pointer-events-none');
+            gsap.set(panel, { opacity: 0, scale: 0.9 });
+            
+            // 重置悬浮球颜色
+            triggerBtn.className = "w-14 h-14 rounded-full bg-gradient-to-tr from-brand-600 to-indigo-500 shadow-glow flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-200 border border-brand-500/20 relative group";
+            triggerLogo.className = "w-7 h-7 text-white drop-shadow-md transition-all duration-300";
+            
+            triggerBadge.classList.add('hidden');
+            triggerBadge.innerText = "0";
+            
+            applyTriggerLayoutAndPosition();
+            performAutoSnapping();
+
+            // 重设对话视图
+            const flow = document.getElementById('chatMessageFlow');
+            flow.innerHTML = `
+                <div class="flex gap-2.5 items-start">
+                    <div class="w-6 h-6 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center flex-shrink-0 text-[10px] font-bold">
+                        AI
+                    </div>
+                    <div class="bg-indigo-950/20 border border-slate-800/60 rounded-xl rounded-tl-none p-3 text-xs text-slate-200 max-w-[85%] leading-relaxed">
+                        你好！已激活轻量操作面板窗口，我将遵循不打断、不跳转、快速执行的原则为您服务。有什么可以直接询问？
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('chatEmptyState').classList.remove('hidden');
+            flow.classList.add('hidden');
+            widgetInput.value = "";
+            handleInputBehaviour(widgetInput);
+            
+            // 离线/专注
+            hostFocusIndicator.classList.add('hidden');
+            document.getElementById('panelHeaderFocusBtn').innerHTML = `<i class="fa-regular fa-moon text-xs"></i>`;
+            document.getElementById('btnFocusMode').className = "flex-1 hover:bg-indigo-600/20 hover:border-indigo-500/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2";
+            document.getElementById('btnFocusMode').innerHTML = `<i class="fa-regular fa-moon"></i> 开启系统专注模式 (Focus Mode)`;
+
+            document.getElementById('headerBadgeOffline').classList.add('hidden');
+            hostNetworkIndicator.className = "flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono";
+            hostNetworkIndicator.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> ONLINE`;
+            document.getElementById('btnNetworkMode').innerHTML = `<i class="fa-solid fa-wifi"></i> 模拟断网 (Offline)`;
+            document.getElementById('btnNetworkMode').className = "flex-1 hover:bg-brand-error/20 hover:border-brand-error/40 transition-all px-3 py-2 bg-slate-800/40 border border-slate-750 rounded text-xs font-medium text-slate-300 flex items-center justify-center gap-2";
+
+            toggleAgentUiState(false);
+            showSandboxToast("⚙️ 系统沙箱已重置为：初始状态");
+        }
+
+        // 沙壳简易通知
+        function showSandboxToast(msg) {
+            const toast = document.getElementById('sandboxToast');
+            document.getElementById('sandboxToastText').innerText = msg;
+            
+            gsap.killTweensOf(toast);
+            gsap.fromTo(toast, 
+                { opacity: 0, y: -10, scale: 0.95 },
+                { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'power2.out', onComplete: () => {
+                    gsap.to(toast, { opacity: 0, y: -10, scale: 0.95, duration: 0.25, delay: 3.5 });
+                }}
+            );
+        }
+    </script>
+</body>
+</html>
