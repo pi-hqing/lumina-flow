@@ -35,6 +35,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Spotlight Search -->
+    <link rel="stylesheet" href="spotlight.css">
     <!-- GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <style>
@@ -719,6 +721,11 @@
             </div>
             
             <div class="flex items-center gap-1.5 pointer-events-auto">
+                <!-- 搜索按钮 (Spotlight) -->
+                <button onclick="openSpotlight()" id="panelHeaderSearchBtn" class="w-7 h-7 hover:bg-slate-800 rounded flex items-center justify-center text-slate-400 hover:text-slate-200 transition-all" title="搜索 (Ctrl+K)">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                </button>
+                <div class="w-[1px] h-3 bg-slate-800"></div>
                 <!-- 专注于动作 / 历史 / 隐藏按钮 -->
                 <button onclick="toggleWidgetFocus()" id="panelHeaderFocusBtn" class="w-7 h-7 hover:bg-slate-800 rounded flex items-center justify-center text-slate-400 hover:text-brand-warning transition-all" title="手动专注模式">
                     <i class="fa-regular fa-moon text-xs"></i>
@@ -1875,6 +1882,12 @@
                         collapseWidget();
                     }
                 }
+
+                // Ctrl+K 唤起 Spotlight 搜索
+                if ((e.key === 'k' || e.key === 'K') && e.ctrlKey && !e.shiftKey && !e.metaKey) {
+                    e.preventDefault();
+                    openSpotlight();
+                }
             });
         }
 
@@ -2994,5 +3007,7 @@
             );
         }
     </script>
+    <!-- Spotlight Search Module -->
+    <script src="spotlight.js"></script>
 </body>
 </html>
