@@ -615,22 +615,22 @@
             </div>
 
             <!-- 轻提示摘要滑出卡片 (L2 Tooltip, Step 7.2 L2) -->
-            <div id="lightNotificationBanner" class="absolute right-[70px] bg-slate-900/95 text-slate-100 border border-brand-500/30 rounded-lg p-3 shadow-xl w-64 text-xs select-none pointer-events-none opacity-0 scale-90 translate-x-4 transition-all duration-300 flex flex-col gap-1.5">
+            <div id="lightNotificationBanner" class="absolute right-[70px] bg-slate-900/95 text-slate-100 border border-brand-500/30 rounded-lg p-3 shadow-xl w-64 text-xs select-none opacity-0 scale-90 translate-x-4 transition-all duration-300 flex flex-col gap-1.5 cursor-pointer hover:border-brand-500/60 hover:shadow-glow">
                 <div class="flex justify-between items-center text-[10px] text-brand-active font-mono uppercase tracking-wider">
                     <span>💬 LUMINA 轻提示</span>
-                    <span class="text-slate-500">刚刚</span>
+                    <span id="lightNotificationTime" class="text-slate-500">刚刚</span>
                 </div>
                 <div id="lightNotificationText" class="text-slate-200 leading-normal font-medium truncate-2-lines"></div>
                 <div class="text-[9px] text-slate-500 flex items-center gap-1">
                     <i class="fa-solid fa-arrow-pointer text-[8px]"></i>
-                    <span>点击悬浮球可快速处理</span>
+                    <span>点击查看详情并处理</span>
                 </div>
             </div>
 
             <!-- ========================================== -->
             <!-- Copilot 模式：Hover 态悬停高频推荐卡片 (Step 4.1.1) -->
             <!-- ========================================== -->
-            <div id="hoverRecommendCard" class="absolute right-[70px] bottom-[36px] text-slate-100 text-xs select-none pointer-events-none opacity-0 scale-90 translate-x-4 transition-all duration-300 flex flex-col gap-1.5 z-50 w-max items-end">
+            <div id="hoverRecommendCard" class="absolute right-[0px] bottom-[64px] text-slate-100 text-xs select-none pointer-events-none opacity-0 scale-90 transition-all duration-300 flex flex-col gap-1.5 z-50 w-max items-end">
                 <span id="hoverCardTitle" class="hidden"></span>
                 <span id="hoverCardSubtitle" class="hidden"></span>
                 <div id="recommendActionsContainer" class="flex flex-col gap-1.5 pointer-events-auto items-end">
@@ -907,6 +907,8 @@
             // Hover 态高频推荐
             hoverRecommendTimer: null,
             leaveRecommendTimer: null,
+            l2PopoutTimer: null,
+            l2BannerSide: 'right',
             activeHostContext: 'general'
         };
 
@@ -1351,7 +1353,12 @@
                 }
 
                 // 1. 如果处于缩进吸附态，鼠标进来优先完全复原展示球 (Step 4.1 "Hover 时完全展示折叠态")
+                //    同时取消 L2 通知的弹出计时（hover 接管控制权）
                 if (state.snappedLeft || state.snappedRight) {
+                    if (state.l2PopoutTimer) {
+                        clearTimeout(state.l2PopoutTimer);
+                        state.l2PopoutTimer = null;
+                    }
                     let restoreX = state.snappedLeft ? 10 : window.innerWidth - 66;
                     gsap.to(trigger, { left: restoreX, duration: 0.2, ease: 'power2.out' });
                     gsap.to(triggerBtn, { opacity: 1, scale: 1, duration: 0.2 });
@@ -1395,25 +1402,25 @@
             // Ensure the actions are fresh before display
             renderHoverRecommendActions();
 
-            // 动态定位：根据靠屏幕哪侧，自适应 card 显示在左侧还是右侧，极简滑动渐显
+            // 动态定位：卡片与球边缘平齐，底部在球顶部上方 8px
             if (leftSided) {
-                hoverCard.classList.remove('right-[70px]', 'translate-x-4', 'items-end');
-                hoverCard.classList.add('left-[70px]', '-translate-x-4', 'items-start');
+                hoverCard.classList.remove('right-[0px]', 'items-end');
+                hoverCard.classList.add('left-[0px]', 'items-start');
                 recommendActionsContainer.classList.remove('items-end');
                 recommendActionsContainer.classList.add('items-start');
                 gsap.killTweensOf(hoverCard);
                 gsap.fromTo(hoverCard, 
-                    { opacity: 0, scale: 0.9, x: -15 },
+                    { opacity: 0, scale: 0.9, x: -8 },
                     { opacity: 1, scale: 1, x: 0, duration: 0.3, ease: 'power3.out', pointerEvents: 'auto' }
                 );
             } else {
-                hoverCard.classList.remove('left-[70px]', '-translate-x-4', 'items-start');
-                hoverCard.classList.add('right-[70px]', 'translate-x-4', 'items-end');
+                hoverCard.classList.remove('left-[0px]', 'items-start');
+                hoverCard.classList.add('right-[0px]', 'items-end');
                 recommendActionsContainer.classList.remove('items-start');
                 recommendActionsContainer.classList.add('items-end');
                 gsap.killTweensOf(hoverCard);
                 gsap.fromTo(hoverCard, 
-                    { opacity: 0, scale: 0.9, x: 15 },
+                    { opacity: 0, scale: 0.9, x: 8 },
                     { opacity: 1, scale: 1, x: 0, duration: 0.3, ease: 'power3.out', pointerEvents: 'auto' }
                 );
             }
@@ -1817,6 +1824,12 @@
 
             // 清空折叠态临时红/呼气
             clearL2Banner();
+
+            // 取消 L2 弹出计时（展开面板接管了球的状态）
+            if (state.l2PopoutTimer) {
+                clearTimeout(state.l2PopoutTimer);
+                state.l2PopoutTimer = null;
+            }
         }
 
         function collapseWidget() {
@@ -2611,6 +2624,8 @@
         }
 
         // L2 轻提示摘要横幅滑出 (Step 7.2 L2: 露出 4 秒后收起)
+        // + 悬浮球从贴边弹出，弹框消失后再缩回
+        // + 点击弹框可打开面板查看详情
         function pushL2Notification(message) {
             state.unreadCount++;
             triggerBadge.classList.remove('hidden');
@@ -2618,20 +2633,115 @@
 
             lightBannerText.innerText = message;
             
+            // 更新时间戳
+            const now = new Date();
+            const timeEl = document.getElementById('lightNotificationTime');
+            if (timeEl) timeEl.innerText = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+            // 判断弹框出现在球的哪一侧
+            const ballLeft = trigger.getBoundingClientRect().left;
+            const isLeftSide = state.snappedLeft || (!state.snappedRight && ballLeft < window.innerWidth / 2);
+            state.l2BannerSide = isLeftSide ? 'left' : 'right';
+
+            // 切换弹框位置 class
+            if (isLeftSide) {
+                lightBanner.classList.remove('right-[70px]', 'translate-x-4');
+                lightBanner.classList.add('left-[70px]', '-translate-x-4');
+            } else {
+                lightBanner.classList.remove('left-[70px]', '-translate-x-4');
+                lightBanner.classList.add('right-[70px]', 'translate-x-4');
+            }
+
+            const slideDir = isLeftSide ? -20 : 20;
             gsap.killTweensOf(lightBanner);
             gsap.fromTo(lightBanner, 
-                { opacity: 0, scale: 0.9, x: 20 },
-                { opacity: 1, scale: 1, x: 0, duration: 0.3, ease: 'power3.out' }
+                { opacity: 0, scale: 0.9, x: slideDir, pointerEvents: 'none' },
+                { opacity: 1, scale: 1, x: 0, pointerEvents: 'auto', duration: 0.3, ease: 'power3.out' }
             );
 
-            // 停留 4 秒后自动滑走收纳 (Step 7.2 L2)
-            setTimeout(() => {
+            // 点击弹框 → 展开面板展示详细信息
+            lightBanner.onclick = () => {
+                // 取消 L2 弹出计时
+                if (state.l2PopoutTimer) {
+                    clearTimeout(state.l2PopoutTimer);
+                    state.l2PopoutTimer = null;
+                }
                 clearL2Banner();
-            }, 4000);
+                expandWidget();
+                insertL2DetailCard(message, now);
+            };
+
+            // 悬浮球贴边弹出：如果球处于吸附半隐藏态，弹出至完全可见
+            if (!state.isWidgetExpanded && !state.isDragging && (state.snappedLeft || state.snappedRight)) {
+                // 取消上一个 L2 弹出计时（连续通知重置计时）
+                if (state.l2PopoutTimer) clearTimeout(state.l2PopoutTimer);
+
+                // 弹出至完全可见
+                const restoreX = state.snappedLeft ? 10 : window.innerWidth - 66;
+                gsap.to(trigger, { left: restoreX, duration: 0.25, ease: 'power2.out' });
+                gsap.to(triggerBtn, { opacity: 1, scale: 1, duration: 0.25 });
+            }
+
+            // 停留 6 秒后横幅滑走，然后球自然缩回贴边
+            const bannerTimeout = setTimeout(() => {
+                clearL2Banner();
+                // 弹框消失后，球缩回
+                state.l2PopoutTimer = setTimeout(() => {
+                    state.l2PopoutTimer = null;
+                    if (state.isWidgetExpanded || state.isDragging) return;
+                    if (!state.snappedLeft && !state.snappedRight) return;
+                    const hiddenX = state.snappedLeft ? -36 : window.innerWidth - 20;
+                    gsap.to(trigger, { left: hiddenX, duration: 0.3, ease: 'power2.in' });
+                    gsap.to(triggerBtn, { opacity: 0.5, scale: 0.9, duration: 0.3 });
+                }, 200);
+            }, 6000);
+        }
+
+        // L2 通知详情 InlineCard：点击弹框后在消息流中展示
+        function insertL2DetailCard(message, time) {
+            const flow = document.getElementById('chatMessageFlow');
+            flow.classList.remove('hidden');
+            const emptyState = document.getElementById('chatEmptyState');
+            if (emptyState) emptyState.classList.add('hidden');
+
+            const timeStr = time.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const card = document.createElement('div');
+            card.className = "p-3 bg-brand-500/8 border border-brand-500/25 rounded-lg text-xs tracking-wide flex flex-col gap-2.5 mb-2 select-text pointer-events-auto";
+            card.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span class="font-bold font-mono text-brand-500 text-[10px]">📋 L2 通知详情</span>
+                    <span class="text-[9px] text-slate-500">${timeStr}</span>
+                </div>
+                <div class="font-semibold text-slate-100 text-[11px] leading-relaxed">${message}</div>
+                <div class="text-[10px] text-slate-400 leading-relaxed">
+                    <i class="fa-solid fa-circle-info text-brand-500 mr-1"></i>
+                    此通知来自自动化流水线。点击弹框已自动展开面板并展示详情，你可通过下方输入框继续追问或执行操作。
+                </div>
+                <div class="h-[1px] bg-brand-500/15"></div>
+                <div class="flex gap-2">
+                    <button onclick="this.closest('.p-3').remove(); showSandboxToast('已确认通知')" class="flex-1 bg-brand-500/20 hover:bg-brand-500/35 text-brand-500 font-semibold rounded text-center py-1 text-[10px] transition-all">
+                        <i class="fa-solid fa-check mr-1"></i>确认已知悉
+                    </button>
+                    <button onclick="this.closest('.p-3').remove(); showSandboxToast('已忽略通知')" class="text-slate-500 hover:text-slate-300 text-[10px] flex items-center justify-center font-semibold px-2">
+                        忽略
+                    </button>
+                </div>
+            `;
+
+            flow.insertBefore(card, flow.firstChild);
+            scrollToContentBottom();
+
+            state.l1l2NotificationList.push({
+                message: message,
+                time: time.getTime(),
+                level: 'L2'
+            });
         }
 
         function clearL2Banner() {
-            gsap.to(lightBanner, { opacity: 0, scale: 0.9, x: 10, duration: 0.25 });
+            lightBanner.style.pointerEvents = 'none';
+            const slideDir = state.l2BannerSide === 'left' ? -10 : 10;
+            gsap.to(lightBanner, { opacity: 0, scale: 0.9, x: slideDir, duration: 0.25 });
         }
 
         // L3 强极度提醒卡片：自动唤展开态，将通知排在首层 (Step 7.2 L3)
