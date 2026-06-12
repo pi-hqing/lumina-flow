@@ -649,12 +649,18 @@
          RIGHT-CLICK CONTEXT MENU (Step 4 · 二级入口)
          ========================================== -->
     <div id="triggerContextMenu" class="fixed z-[9200] pointer-events-none opacity-0 scale-95 select-none"
-         style="min-width:180px">
+         style="min-width:230px">
         <div class="bg-slate-900/98 backdrop-blur-xl border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden text-xs text-slate-200 py-1">
-            <!-- 组 1：打开 / 新建 -->
+            <!-- 组 1：打开 / 搜索 / 新建 -->
             <button onclick="ctxMenuAction('open')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
                 <i class="fa-solid fa-wand-magic-sparkles text-brand-active text-[11px] w-3.5"></i>
                 <span>打开助手</span>
+                <span class="ml-auto text-[10px] text-slate-500 font-mono group-hover:text-slate-300">Ctrl+Shift+Space</span>
+            </button>
+            <button onclick="ctxMenuAction('spotlight')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
+                <i class="fa-solid fa-magnifying-glass text-brand-active text-[11px] w-3.5"></i>
+                <span>Spotlight 搜索</span>
+                <span class="ml-auto text-[10px] text-slate-500 font-mono group-hover:text-slate-300">Ctrl+K</span>
             </button>
             <button onclick="ctxMenuAction('new')" class="ctx-item w-full text-left flex items-center gap-2.5 px-4 py-2.5 hover:bg-brand-500/15 hover:text-white transition-colors duration-150 group">
                 <i class="fa-solid fa-plus text-slate-400 text-[11px] w-3.5"></i>
@@ -989,8 +995,8 @@
         function showContextMenu(x, y) {
             // 固定在悬浮球旁边，不跟随鼠标位置
             const triggerRect = trigger.getBoundingClientRect();
-            const menuW = 188;
-            const menuH = 280;
+            const menuW = 232;
+            const menuH = 340;
             const gap = 8;
 
             const ballCenterX = triggerRect.left + triggerRect.width / 2;
@@ -1085,6 +1091,9 @@
                 case 'quit':
                     showSandboxToast('👋 退出 Lumina Widget（此处为演示占位）');
                     if (state.isWidgetExpanded) collapseWidget();
+                    break;
+                case 'spotlight':
+                    openSpotlight();
                     break;
             }
         }
