@@ -557,3 +557,1014 @@
 /* ========================================== */
 /* Spotlight uses light theme by default; dark
    overrides would go here if needed.         */
+
+/* ========================================== */
+/* Spotlight Command Center – New Components  */
+/* ========================================== */
+
+/* ---- Input Area Wrapper ---- */
+#spotlight-input-area {
+  flex-shrink: 0;
+}
+
+/* ---- Source Tabs (replaces filters) ---- */
+#spotlight-source-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 16px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+#spotlight-source-tabs::-webkit-scrollbar { display: none; }
+
+.spotlight-source-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  white-space: nowrap;
+}
+
+.spotlight-source-tab:hover {
+  background: #f8fafc;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.spotlight-source-tab.active {
+  background: rgba(0, 112, 243, 0.07);
+  border-color: rgba(0, 112, 243, 0.25);
+  color: #0070f3;
+  font-weight: 600;
+}
+
+.spotlight-source-tab i {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.spotlight-tab-count {
+  font-size: 10px;
+  background: #f1f5f9;
+  color: #94a3b8;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+.spotlight-source-tab.active .spotlight-tab-count {
+  background: rgba(0, 112, 243, 0.1);
+  color: #0070f3;
+}
+
+/* ---- Content Area ---- */
+#spotlight-content-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#spotlight-content-area::-webkit-scrollbar { width: 4px; }
+#spotlight-content-area::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 4px; }
+
+.spotlight-content-section {
+  flex-shrink: 0;
+}
+
+/* ---- Section Labels ---- */
+.spotlight-section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.spotlight-section-label i {
+  font-size: 10px;
+}
+
+/* ---- Context Suggestions ---- */
+#spotlight-context-suggestions {
+  padding-bottom: 2px;
+}
+
+.spotlight-context-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.spotlight-context-item:hover {
+  background: #f8fafc;
+}
+
+.spotlight-context-item.selected {
+  background: rgba(0, 112, 243, 0.07);
+  outline: 1.5px solid rgba(0, 112, 243, 0.28);
+  outline-offset: -1px;
+  border-radius: 8px;
+  margin: 0 6px;
+  padding: 8px 10px;
+}
+
+.spotlight-context-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #f1f5f9;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.spotlight-context-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.spotlight-context-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.spotlight-context-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.spotlight-context-arrow {
+  font-size: 10px;
+  color: #d1d5db;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.spotlight-context-item:hover .spotlight-context-arrow {
+  opacity: 1;
+  color: #0070f3;
+}
+
+/* ---- Active Plan Card ---- */
+.spotlight-plan-card {
+  margin: 4px 12px 8px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s;
+}
+
+.spotlight-plan-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.spotlight-plan-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.spotlight-plan-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.spotlight-plan-card-progress {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0070f3;
+  background: rgba(0, 112, 243, 0.08);
+  padding: 1px 8px;
+  border-radius: 999px;
+}
+
+.spotlight-plan-progress-bar {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.spotlight-plan-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0070f3, #6366f1);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.spotlight-plan-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.spotlight-plan-current-step {
+  font-size: 10px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.step-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.step-indicator.running {
+  background: #0070f3;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.spotlight-plan-steps-mini {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.spotlight-plan-step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.spotlight-plan-step-dot.done { background: #10b981; }
+.spotlight-plan-step-dot.running { background: #0070f3; animation: pulse-dot 1.5s infinite; }
+.spotlight-plan-step-dot.pending { background: #d1d5db; }
+.spotlight-plan-step-dot.failed { background: #ef4444; }
+.spotlight-plan-step-dot.waiting { background: #f59e0b; }
+
+.spotlight-plan-more-steps {
+  font-size: 9px;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+/* ---- Multi-plan list ---- */
+.spotlight-plan-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spotlight-plans-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #6366f1;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  padding: 0 5px;
+  margin-left: 4px;
+  line-height: 1;
+}
+
+.spotlight-plans-new-btn {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid #e0e7ff;
+  background: #eef2ff;
+  color: #6366f1;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: background 0.15s;
+}
+
+.spotlight-plans-new-btn:hover {
+  background: #e0e7ff;
+}
+
+.spotlight-plans-toggle {
+  width: 100%;
+  padding: 5px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 2px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: color 0.12s;
+}
+
+.spotlight-plans-toggle:hover {
+  color: #374151;
+}
+
+.spotlight-plan-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.spotlight-plan-current-step {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #6b7280;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spotlight-plan-steps-mini {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.spotlight-plan-expand-btn {
+  width: 100%;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #6366f1;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.spotlight-plan-expand-btn:hover {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+}
+
+/* ---- Action Suggestions ---- */
+.spotlight-action-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.spotlight-action-item:hover {
+  background: #f8fafc;
+}
+
+.spotlight-action-item.selected {
+  background: rgba(0, 112, 243, 0.07);
+  outline: 1.5px solid rgba(0, 112, 243, 0.28);
+  outline-offset: -1px;
+  border-radius: 8px;
+  margin: 0 6px;
+  padding: 8px 10px;
+}
+
+.spotlight-action-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #f0f9ff;
+  color: #0070f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.spotlight-action-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.spotlight-action-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.spotlight-action-subtitle {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.spotlight-action-shortcut kbd {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  font-size: 10px;
+  font-weight: 600;
+  color: #94a3b8;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* ---- Plan Preview Mode ---- */
+#spotlight-plan-preview {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#spotlight-plan-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+#spotlight-plan-preview-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+#spotlight-plan-preview-back {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #64748b;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+#spotlight-plan-preview-back:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+#spotlight-plan-preview-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#spotlight-plan-preview-body::-webkit-scrollbar { width: 4px; }
+#spotlight-plan-preview-body::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 4px; }
+
+#spotlight-plan-preview-input-area {
+  display: flex;
+  gap: 8px;
+}
+
+#spotlight-plan-title-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  background: #fff;
+  outline: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: border-color 0.15s;
+}
+
+#spotlight-plan-title-input:focus {
+  border-color: #0070f3;
+  box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.1);
+}
+
+#spotlight-plan-title-input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+#spotlight-plan-generate-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0070f3, #6366f1);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+#spotlight-plan-generate-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ---- Plan Steps List ---- */
+.spotlight-plan-steps-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  padding: 8px 0;
+}
+
+.spotlight-plan-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.spotlight-plan-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  transition: all 0.15s;
+}
+
+.spotlight-plan-step:hover {
+  border-color: #cbd5e1;
+  background: #fafbfc;
+}
+
+.spotlight-plan-step-drag {
+  flex-shrink: 0;
+  padding-top: 4px;
+  color: #d1d5db;
+  cursor: grab;
+  font-size: 12px;
+}
+
+.spotlight-plan-step-indicator {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.spotlight-plan-step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotlight-plan-step-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.spotlight-plan-step-title input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  padding: 0;
+}
+
+.spotlight-plan-step-title input:focus {
+  color: #0070f3;
+}
+
+.spotlight-plan-step-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.spotlight-plan-step-meta span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.spotlight-plan-step-type {
+  padding: 0 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+}
+
+.spotlight-plan-step-type.escalation {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.spotlight-plan-step-type.navigation {
+  background: #f0f9ff;
+  color: #0284c7;
+}
+
+.spotlight-plan-step-type.confirm {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.spotlight-plan-step-warning {
+  font-size: 10px;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #fef2f2;
+  border-radius: 4px;
+}
+
+.spotlight-plan-step-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 4px;
+}
+
+.spotlight-plan-step-delete {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+.spotlight-plan-step-delete:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.spotlight-plan-add-step {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px dashed #d1d5db;
+  background: transparent;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: all 0.15s;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin-top: 4px;
+}
+
+.spotlight-plan-add-step:hover {
+  border-color: #0070f3;
+  color: #0070f3;
+  background: rgba(0, 112, 243, 0.04);
+}
+
+.spotlight-plan-empty {
+  text-align: center;
+  padding: 24px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* ---- Plan Preview Footer ---- */
+#spotlight-plan-preview-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+#spotlight-plan-step-count {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+#spotlight-plan-confirm-btn {
+  padding: 7px 18px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0070f3, #6366f1);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  transition: all 0.15s;
+}
+
+#spotlight-plan-confirm-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ---- AI Summary Panel ---- */
+#spotlight-ai-summary-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#spotlight-ai-summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+#spotlight-ai-summary-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#spotlight-ai-summary-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s;
+}
+
+#spotlight-ai-summary-close:hover {
+  background: #e5e7eb;
+  color: #475569;
+}
+
+#spotlight-ai-summary-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#spotlight-ai-summary-body::-webkit-scrollbar { width: 4px; }
+#spotlight-ai-summary-body::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 4px; }
+
+.spotlight-ai-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.spotlight-ai-section-content {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.spotlight-ai-source-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 11px;
+  color: #475569;
+}
+
+.spotlight-ai-source-item span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotlight-ai-actions-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.spotlight-ai-action-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.spotlight-ai-action-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #0070f3;
+}
+
+.spotlight-streaming-skeleton {
+  display: flex;
+  gap: 2px;
+  padding: 8px 0;
+  font-size: 20px;
+  color: #6366f1;
+}
+
+/* ---- Footer (updated) ---- */
+#spotlight-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid #f3f4f6;
+  font-size: 11px;
+  color: #94a3b8;
+  flex-shrink: 0;
+}
+
+#spotlight-footer-left,
+#spotlight-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#spotlight-footer kbd,
+.spotlight-footer-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-width: 16px;
+}
+
+#spotlight-footer span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spotlight-footer-hint {
+  color: #94a3b8;
+}
+
+/* ---- Connection Status ---- */
+#spotlight-connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.spotlight-connection-online {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.spotlight-connection-offline {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+#spotlight-connection-status .status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.spotlight-connection-online .status-dot {
+  background: #10b981;
+  animation: pulse-dot 2s infinite;
+}
+
+.spotlight-connection-offline .status-dot {
+  background: #ef4444;
+}
+
+/* ---- Highlight Match ---- */
+.spotlight-highlight {
+  background: #fde68a;
+  color: #0f172a;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ---- Hidden utility ---- */
+.hidden { display: none !important; }

@@ -1,7 +1,66 @@
 # Lumina Widget · UX 综合流程图
 
 > 基于 [Agent Desktop Widget UX.md](Agent%20Desktop%20Widget%20UX.md) Final 版本生成  
-> 覆盖：生命周期、用户触发、Agent 决策、Escalation、通知、专注模式
+> 覆盖：生命周期、用户触发、Agent 决策、Escalation、通知、专注模式、Spotlight Command Center
+
+---
+
+## 0. Spotlight Command Center 流程
+
+```mermaid
+flowchart TD
+    Trigger["⌨️ Ctrl+K / Ctrl+Shift+Space<br/>唤起 Spotlight"] --> Open["✨ Spotlight 打开<br/>弹性模态面板"]
+
+    Open --> ModeCheck{"输入框内容?"}
+
+    ModeCheck -->|空| Suggestions["💡 建议模式<br/>suggestions"]
+    ModeCheck -->|有输入| Search["🔍 搜索模式<br/>search"]
+
+    Suggestions --> ContextSuggestions["🧠 上下文建议<br/>· 继续执行计划<br/>· 跟进会议笔记<br/>· 查看紧急邮件<br/>· 检查 Jira 工单"]
+    Suggestions --> ActionSuggestions["⚡ 快捷操作<br/>· AI 摘要 (⌘↩)<br/>· 创建执行计划 (⌘P)"]
+
+    Search --> FilteredResults["📋 按来源分组的搜索结果<br/>全部 / Jira / 邮件 / 文档 / 代码"]
+
+    Open --> PlanEntry{"有活跃执行计划?"}
+    PlanEntry -->|是| ActivePlanCard["📊 活跃计划卡片<br/>进度条 + 当前步骤"]
+    ActivePlanCard -->|点击查看详情| PlanPreview["🔄 计划预览模式<br/>plan_preview"]
+
+    Open --> ShortcutPlan["⌘P 快捷键"]
+    Open --> ShortcutAI["⌘↩ 快捷键"]
+
+    ShortcutPlan --> PlanPreview
+    ShortcutAI --> AISummaryPanel
+
+    PlanPreview --> PlanInput["✏️ 输入计划目标"]
+    PlanInput --> PlanGenerate["🤖 生成执行步骤<br/>Streaming 骨架屏"]
+    PlanGenerate --> PlanEdit["📝 可编辑预览<br/>· 重排序<br/>· 删除<br/>· 插入<br/>· 重命名"]
+    PlanEdit --> PlanConfirm["✅ 确认并执行"]
+    PlanConfirm --> ActivePlanCard
+
+    AISummaryPanel["📄 AI 摘要面板<br/>ai_summary"] --> Sources["📚 引用来源"]
+    AISummaryPanel --> StreamingSummary["🔄 流式生成摘要"]
+    AISummaryPanel --> FollowUpActions["⚡ 后续操作<br/>· 在 Widget 中询问<br/>· 复制<br/>· 打开来源"]
+
+    Open --> Esc{"Esc 键"}
+    Esc --> Close["✖ 关闭 Spotlight"]
+
+    subgraph Keyboard_Shortcuts["⌨️ 键盘导航"]
+        Nav["↑↓ 导航条目"]
+        Enter["Enter 选择/打开预览"]
+        Tab["Tab 切换来源标签"]
+        Cmd1_5["⌘1-5 切换来源"]
+        Esc["Esc 关闭/返回"]
+        CmdP["⌘P 创建执行计划"]
+        CmdEnter["⌘↩ AI 摘要"]
+    end
+
+    subgraph Content_Priority["📊 内容优先级"]
+        P1["P1: 上下文建议<br/>(输入为空时)"]
+        P2["P2: 活跃执行计划<br/>(如有运行中计划)"]
+        P3["P3: 快捷操作建议<br/>(用户输入时)"]
+        P4["P4: 搜索结果<br/>(按来源分组)"]
+    end
+```
 
 ---
 
