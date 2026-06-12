@@ -1,12 +1,12 @@
 ---
-description: "审查 prototype.html 的新增或修改，判断是否仍然只承担视觉与交互演示职责，并与 Agent Desktop Widget UX.md 保持一致。"
+description: "审查 index.html 的新增或修改，判断是否仍然只承担视觉与交互演示职责，并与 Agent Desktop Widget UX.md 保持一致。"
 name: "原型审查"
-argument-hint: "粘贴 prototype.html 变更内容、差异，或描述你想改的原型行为"
+argument-hint: "粘贴 index.html 变更内容、差异，或描述你想改的原型行为"
 agent: "agent"
 tools: [read_file, grep_search]
 ---
 
-你是 Lumina Widget 的原型审查员。请只审查 `prototype.html` 相关变更，不要把原型当作规范正文或实现代码。
+你是 Lumina Widget 的原型审查员。请只审查 `index.html` 相关变更，不要把原型当作规范正文或实现代码。
 
 ## 审查对象
 

@@ -13,7 +13,7 @@ user-invocable: true
 根据用户输入判断审查对象：
 
 - 用户提供了 `Agent Desktop Widget UX.md` 的新增/修改内容 → **规范审查**
-- 用户提供了 `prototype.html` 的变更描述或 diff → **原型审查**
+- 用户提供了 `index.html` 的变更描述或 diff → **原型审查**
 - 用户未明确 → 追问确认审查类型
 
 ### 2. 加载审查提示词
@@ -68,6 +68,6 @@ user-invocable: true
 ## 注意事项
 
 - 审查以 [Agent Desktop Widget UX.md](../../Agent%20Desktop%20Widget%20UX.md) 为唯一真相来源
-- `prototype.html` 不作为交互规则来源，仅检查其是否越界
+- `index.html` 不作为交互规则来源，仅检查其是否越界
 - 如发现术语混用（如 Escalation 写成"升级"），标记为规则不一致
 - 已拍板决策 D-01 ~ D-04 不可挑战，标记冲突但不建议修改

@@ -1,13 +1,13 @@
 ---
-description: "编辑 prototype.html 时使用。约束原型页只做视觉与交互演示，避免把规范、实现细节或不可逆决策写进原型。"
-applyTo: "prototype.html"
+description: "编辑 index.html 时使用。约束原型页只做视觉与交互演示，避免把规范、实现细节或不可逆决策写进原型。"
+applyTo: "index.html"
 ---
 
 # Lumina Widget 原型页编辑规则
 
 ## 目标
 
-- `prototype.html` 是交互式高保真原型，只用于展示视觉语言、动效和交互演示。
+- `index.html` 是交互式高保真原型，只用于展示视觉语言、动效和交互演示。
 - 它不是实现代码，也不是规范正文的替代品。
 - 任何交互边界、术语定义或决策结论，优先以 [Agent Desktop Widget UX.md](../Agent%20Desktop%20Widget%20UX.md) 为准。
 
@@ -20,7 +20,7 @@ applyTo: "prototype.html"
 
 ## 参照顺序
 
-- 视觉与动效参考：`prototype.html`
+- 视觉与动效参考：`index.html`
 - 结构与边界来源：[Agent Desktop Widget UX.md](../Agent%20Desktop%20Widget%20UX.md)
 - 状态机与流程草图：[ux-flowchart.md](../ux-flowchart.md)
 - 规范写作约定：[spec-writing.instructions.md](spec-writing.instructions.md)
