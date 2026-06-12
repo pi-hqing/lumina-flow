@@ -646,7 +646,7 @@
     <!-- ==========================================
          RIGHT-CLICK CONTEXT MENU (Step 4 · 二级入口)
          ========================================== -->
-    <div id="triggerContextMenu" class="fixed z-[9200] pointer-events-none opacity-0 scale-95 origin-top-left select-none"
+    <div id="triggerContextMenu" class="fixed z-[9200] pointer-events-none opacity-0 scale-95 select-none"
          style="min-width:180px">
         <div class="bg-slate-900/98 backdrop-blur-xl border border-slate-700/80 rounded-xl shadow-2xl overflow-hidden text-xs text-slate-200 py-1">
             <!-- 组 1：打开 / 新建 -->
@@ -980,14 +980,37 @@
         }
 
         function showContextMenu(x, y) {
-            // 避开屏幕边缘溢出
+            // 固定在悬浮球旁边，不跟随鼠标位置
+            const triggerRect = trigger.getBoundingClientRect();
             const menuW = 188;
             const menuH = 280;
-            const safeX = Math.min(x, window.innerWidth - menuW - 8);
-            const safeY = Math.min(y, window.innerHeight - menuH - 8);
+            const gap = 8;
+
+            const ballCenterX = triggerRect.left + triggerRect.width / 2;
+            const ballCenterY = triggerRect.top + triggerRect.height / 2;
+
+            let menuX, originX;
+
+            if (ballCenterX < window.innerWidth / 2) {
+                // 球在左半屏 → 菜单出现在球右侧
+                menuX = triggerRect.right + gap;
+                originX = 'left';
+            } else {
+                // 球在右半屏 → 菜单出现在球左侧
+                menuX = triggerRect.left - menuW - gap;
+                originX = 'right';
+            }
+
+            // 垂直居中于悬浮球
+            let menuY = ballCenterY - menuH / 2;
+
+            // 边界保护
+            const safeX = Math.max(4, Math.min(menuX, window.innerWidth - menuW - 4));
+            const safeY = Math.max(4, Math.min(menuY, window.innerHeight - menuH - 4));
 
             ctxMenu.style.left = safeX + 'px';
             ctxMenu.style.top  = safeY + 'px';
+            ctxMenu.style.transformOrigin = `${originX} center`;
             ctxMenu.style.pointerEvents = 'auto';
 
             gsap.killTweensOf(ctxMenu);
