@@ -1056,16 +1056,11 @@
                     if (!state.isWidgetExpanded) expandWidget();
                     break;
                 case 'new':
-                    if (state.isWidgetExpanded) collapseWidget();
-                    setTimeout(() => {
+                    // 重置会话视图到初始空态
+                    resetSessionToEmptyState();
+                    if (!state.isWidgetExpanded) {
                         expandWidget();
-                        setTimeout(() => {
-                            const flow = document.getElementById('chatMessageFlow');
-                            if (flow) flow.innerHTML = '';
-                            widgetInput.value = '';
-                            handleInputBehaviour(widgetInput);
-                        }, 300);
-                    }, 200);
+                    }
                     break;
                 case 'screenshot':
                     expandWidget();
@@ -3047,6 +3042,34 @@
             gsap.to(mainApp.querySelector('.max-w-4xl'), { scale: 0.9, y: 15, duration: 0.35 });
             
             showSandboxToast("已成功返回 Widget 轻量协同窗口层 (Layer 1)");
+        }
+
+        // ==========================================
+        // 重置会话为空态（保留面板展开状态不变）
+        // ==========================================
+        function resetSessionToEmptyState() {
+            // 中断正在进行的 Agent 响应
+            if (state.currentStreamingTimer) clearInterval(state.currentStreamingTimer);
+            state.isAgentResponding = false;
+            toggleAgentUiState(false);
+
+            // 清空输入
+            widgetInput.value = '';
+            handleInputBehaviour(widgetInput);
+
+            // 重置会话计数与 Escalation 标志
+            state.sessionCount = 0;
+            state.escalationDeclinedThisSession = false;
+            state.hasShownRound4Escalation = false;
+            state.hasShownRound7Escalation = false;
+            state.currentDraft = '';
+
+            // 重置消息流：隐藏 chatMessageFlow，显示 chatEmptyState
+            const flow = document.getElementById('chatMessageFlow');
+            const empty = document.getElementById('chatEmptyState');
+            if (flow) flow.innerHTML = '';
+            if (flow) flow.classList.add('hidden');
+            if (empty) empty.classList.remove('hidden');
         }
 
         // ==========================================
