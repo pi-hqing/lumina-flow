@@ -434,7 +434,7 @@ function renderResults() {
           </div>
           <div class="spotlight-result-text">
             <span class="spotlight-result-title">${highlightMatch(item.title)}</span>
-            <span class="spotlight-result-subtitle">${highlightMatch(item.subtitle)}</span>
+            <span class="spotlight-result-subtitle"><i style="color: #6366f1;" class="fa-solid fa-wand-magic-sparkles"></i>&nbsp;${highlightMatch(item.subtitle)}</span>
           </div>
           <span class="spotlight-result-badge">${escapeHtml(item.badge)}</span>
         </div>
@@ -507,10 +507,19 @@ function openPreview(item) {
         <div style="font-size:12px;color:#334155;line-height:1.6;">${escapeHtml(item.extra || '暂无详细信息')}</div>
       </div>
       <div>
-        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">快捷操作</div>
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">通用快捷</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button onclick="continueInWidget()" style="padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#0f172a;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">在 Widget 中打开</button>
           <button onclick="if(typeof triggerEscalation==='function')triggerEscalation('navigation','spotlight_preview')" style="padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#0f172a;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">主应用打开</button>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${escapeHtml(srcLabel)}快捷</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button onclick="continueInWidget()" style="padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#0f172a;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">工作流分析</button>
+          <button onclick="continueInWidget()" style="padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#0f172a;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">负责人提醒</button>
+          <button onclick="continueInWidget()" style="padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#0f172a;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">票据摘要</button>
+          <button onclick="continueInWidget()" style="padding:6px 12px;border-radius:6px;border:1px solid #d1d5db;background:#fff;color:#0f172a;font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;">影响范围识别</button>
         </div>
       </div>
     </div>
